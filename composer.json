@@ -1,0 +1,9 @@
+{
+  "require": {
+    "php": "^7.4.0",
+    "ext-imagick": "*"
+  },
+  "require-dev": {
+    "heroku/heroku-buildpack-php": "*"
+  }
+}

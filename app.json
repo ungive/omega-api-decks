@@ -1,0 +1,6 @@
+{
+  "name": "Deck image generator for Yu-Gi-Oh!",
+  "description": "Generates an image from your Yu-Gi-Oh! deck list",
+  "repository": "https://github.com/vonas/deck-image",
+  "addons": []
+}
