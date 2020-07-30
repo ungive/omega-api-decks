@@ -1,0 +1,27 @@
+{
+  "main": {
+    "matrix": {
+      "root": {
+        "x": 24,
+        "y": 60
+      },
+      "height": 525,
+      "columns": 10,
+      "entries": {
+        "min": 40,
+        "max": 60
+      }
+    },
+    "entry": {
+      "width": 81,
+      "height": 118,
+      "padding": {
+        "vertical": 7,
+        "horizontal": 10
+      }
+    }
+  },
+  "extra": {
+
+  }
+}

@@ -5,5 +5,15 @@
   },
   "require-dev": {
     "heroku/heroku-buildpack-php": "*"
+  },
+  "autoload": {
+    "classmap": [
+      "src/Format",
+      "src/Game",
+      "src/Utility"
+    ],
+    "files": [
+      "src/helpers.php"
+    ]
   }
 }
