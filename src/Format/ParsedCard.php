@@ -28,6 +28,30 @@ class ParsedCard
         $this->deck_types = new BitField($deck_types);
     }
 
+    public function has_code(): bool { return $this->code !== null; }
+
+    // public function has_name(): bool { return $this->name !== null; }
+
+    public function is_valid(): bool
+    {
+        if (!$this->has_code()) return false;
+        if (count($this->deck_types) !== 1) return false;
+
+        return true;
+    }
+
+    public function to_card(): Card
+    {
+        assert($this->is_valid(), "converting in an invalid state");
+
+        // $deck_type = $this->deck_types->get();
+
+        // if (($deck_type & Card::VALID_DECKTYPES) === 0)
+        //     $deck_type = DeckType::UNKNOWN;
+
+        return new Card($this->code);
+    }
+
     public static function with_code(int $code,
                                      int $deck_types = DeckType::UNKNOWN)
         : ParsedCard
@@ -40,28 +64,5 @@ class ParsedCard
         : ParsedCard
     {
         return new ParsedCard(null, $name, $deck_types);
-    }
-
-    public function has_code(): bool { return $this->code !== null; }
-    public function has_name(): bool { return $this->name !== null; }
-
-    public function is_valid(): bool
-    {
-        if (!$this->has_code()) return false;
-        if (count($this->deck_types) !== 1) return false;
-
-        return true;
-    }
-
-    public function to_card(): Card
-    {
-        # assert($this->is_valid(), "converting in an invalid state");
-
-        $deck_type = $this->deck_types->get();
-
-        if (($deck_type & Card::VALID_DECKTYPES) === 0)
-            $deck_type = DeckType::UNKNOWN;
-
-        return new Card($this->code, $deck_type);
     }
 }

@@ -1,19 +1,22 @@
 {
   "require": {
     "php": "^7.4.0",
-    "ext-imagick": "*"
+    "ext-imagick": "*",
+    "monolog/monolog": "^2.1"
   },
   "require-dev": {
-    "heroku/heroku-buildpack-php": "*"
+    "heroku/heroku-buildpack-php": "*",
+    "phpunit/phpunit": "^9.2"
   },
   "autoload": {
     "classmap": [
-      "src/Format",
-      "src/Game",
-      "src/Utility"
+      "src/"
     ],
     "files": [
-      "src/helpers.php"
+      "src/scripts/const.php",
+      "src/scripts/db.php",
+      "src/scripts/helpers.php",
+      "src/scripts/log.php"
     ]
   }
 }

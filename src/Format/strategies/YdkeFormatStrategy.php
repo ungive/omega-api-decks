@@ -21,15 +21,11 @@ class YdkeFormatStrategy implements FormatEncodeStrategy, FormatDecodeStrategy
     {
         $encoded = self::PREFIX;
 
-        throw new \Exception("not implemented");
-
-
-
-        $parts = array_map($this->encode_deck, [
-            $list->filter_deck_type(CardType::MAIN_DECK),
-            $list->filter_deck_type(CardType::EXTRA_DECK),
-            $list->filter_deck_type(CardType::SIDE_DECK)
-        ]);
+        $parts = [
+            $this->encode_deck($list->main),
+            $this->encode_deck($list->extra),
+            $this->encode_deck($list->side)
+        ];
 
         $encoded .= implode(self::SEPARATOR, $parts);
         $encoded .= self::SUFFIX;
@@ -52,22 +48,30 @@ class YdkeFormatStrategy implements FormatEncodeStrategy, FormatDecodeStrategy
         if (count($parts) != DeckList::DECK_COUNT)
             throw new FormatDecodeException("invalid number of decks");
 
-        $deck_list = new ParsedCardList();
-        $deck_list->append_all($this->decode_deck($parts[0], DeckType::MAIN));
-        $deck_list->append_all($this->decode_deck($parts[1], DeckType::EXTRA));
-        $deck_list->append_all($this->decode_deck($parts[2], DeckType::SIDE));
+        $list = new ParsedCardList();
+        $list->append_all($this->decode_deck($parts[0], DeckType::MAIN));
+        $list->append_all($this->decode_deck($parts[1], DeckType::EXTRA));
+        $list->append_all($this->decode_deck($parts[2], DeckType::SIDE));
 
-        return $deck_list;
+        return $list;
     }
+
 
     private function encode_deck(Deck $deck): string
     {
-        return base64_encode(pack('V*', ...$deck->cards));
+        $raw = "";
+
+        foreach ($deck->cards() as $card)
+            $raw .= pack('V', $card->code());
+
+        return base64_encode($raw);
     }
 
     private function decode_deck(string $encoded, int $deck_type): ParsedCardList
     {
-        if (!($raw = base64_decode($encoded, true)))
+        $raw = base64_decode($encoded, true);
+
+        if (!$raw)
             throw new FormatDecodeException("malformed base64");
 
         return ParsedCardList::from_codes(unpack("V*", $raw), $deck_type);

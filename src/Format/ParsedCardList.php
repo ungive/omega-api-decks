@@ -20,4 +20,10 @@ class ParsedCardList extends TypedListObject
 
         return new ParsedCardList($cards);
     }
+
+    public function card_codes(): \Generator
+    {
+        foreach ($this as $card)
+            yield $card->code;
+    }
 }

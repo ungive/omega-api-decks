@@ -2,19 +2,18 @@
 
 namespace Format;
 
-use \Yugioh\Deck;
-use \Yugioh\DeckList;
+use \Game\DeckList;
 
 
 class YdkFormatStrategy implements FormatEncodeStrategy, FormatDecodeStrategy
 {
     public function encode(DeckList $list): string
     {
-        throw new FormatException();
+        throw new FormatException("not implemented");
     }
 
-    public function decode(string $encoded): DeckList
+    public function decode(string $encoded): ParsedCardList
     {
-        throw new FormatDecodeException();
+        throw new FormatDecodeException("not implemented");
     }
 }

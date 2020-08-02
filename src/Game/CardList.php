@@ -9,8 +9,13 @@ class CardList extends TypedListObject
 {
     protected function allowed($value): bool { return $value instanceof Card; }
 
-    public function card_codes(): array { return $this->column('code'); }
-    public function card_names(): array { return $this->column('name'); }
+    public function card_codes(): \Generator
+    {
+        foreach ($this as $card)
+            yield $card->get_code();
+    }
+
+    # public function card_names(): array { return $this->column('name'); }
 
     // public static function from_codes(array $codes, int $deck_type): CardList
     // {

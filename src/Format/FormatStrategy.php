@@ -2,6 +2,7 @@
 
 namespace Format;
 
+use Game\Data\Repository;
 use \Game\DeckList;
 
 

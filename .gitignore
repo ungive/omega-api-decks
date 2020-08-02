@@ -1,5 +1,11 @@
-vendor/
-.env
+/vendor/
+.DS_Store
 
-web/cache/
+/web/cache/
+/data/
+/logs/
+
 *.sublime-*
+*.cdb
+*.db
+.env

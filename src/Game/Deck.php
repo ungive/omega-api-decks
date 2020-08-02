@@ -1,57 +1,33 @@
 <?php
 
 namespace Game;
+# TODO: rename to Domain
 
 
+# TODO: make abstract and add abstract static method get_upper_limit() and get_lower_limit()
 class Deck implements \Countable
 {
-    /**
-    * sentinel for auto-detecting the type of a deck.
-    */
-    const DETECT_TYPE = -1;
-
     private array $entries = [];
-    private int $type = DeckType::UNKNOWN;
-
     private int $count = 0;
 
-    /**
-    * creates a new deck from a list of cards
-    * @param CardList $cards the cards
-    * @param int $type the deck type.
-    *   if not passed the type is derived from the first card
-    */
-    public function __construct(int $type = self::DETECT_TYPE,
-                                ?CardList $cards = null)
+    public function __construct(?CardList $cards = null)
     {
-        if ($cards === null)
-            return;
-
-        $this->type = $type;
-
-        if ($type === self::DETECT_TYPE) {
-            if (count($cards) === 0)
-                throw new Exception("cannot guess deck type without cards");
-
-            $this->type = $cards[0]->deck_type;
-        }
-
-        foreach ($cards as $card)
-            $this->add($card);
+        if ($cards !== null)
+            foreach ($cards as $card)
+                $this->add($card);
     }
 
     public function set(Card $card, int $count): DeckEntry
     {
+        if (isset($this->entries[$card->code()]))
+            $this->count -= $this->entries[$card->code()]->count;
+
         $this->count += $count;
-        return $this->entries[$card->code] = new DeckEntry($card, $count);
+        return $this->set_entry($card, new DeckEntry($card, $count));
     }
 
     public function add(Card $card, int $count = 1): DeckEntry
     {
-        if ($this->type !== DeckType::SIDE)
-            if ($card->deck_type !== $this->type)
-                throw new DeckTypeMismatchException("incompatible deck types");
-
         if ($entry = $this->get_or_null($card)) {
             $entry->add_count($count);
             $this->count += $count;
@@ -74,7 +50,7 @@ class Deck implements \Countable
             return;
         }
 
-        $this->entries[$card]->subtract_count($count);
+        $entry->subtract_count($count);
         $this->count -= $count;
     }
 
@@ -90,7 +66,7 @@ class Deck implements \Countable
 
     public function get(Card $card): DeckEntry
     {
-        return $this->entries[$card->code];
+        return $this->entries[$card->code()];
     }
 
     public function get_or_null(Card $card): ?DeckEntry
@@ -98,22 +74,36 @@ class Deck implements \Countable
         return $this->has($card) ? $this->get($card) : null;
     }
 
-    public function get_type(): int { return $this->type; }
-
     public function count(): int { return $this->count; }
 
 
+    public function cards(): \Generator
+    {
+        foreach ($this->entries as $entry)
+            for ($i = 0; $i < count($entry); $i++)
+                yield $entry->card();
+    }
+
+    public function card_codes(): \Generator
+    {
+        foreach ($this->cards() as $card)
+            yield $card->code();
+    }
+
+
+# private:
+
     private function get_entry(Card $card): ?DeckEntry
     {
-        if (isset($this->entries[$card->code]))
-            return $this->entries[$card->code];
+        if (isset($this->entries[$card->code()]))
+            return $this->entries[$card->code()];
 
         return null;
     }
 
     private function set_entry(Card $card, DeckEntry $entry): DeckEntry
     {
-        return $this->entries[$card->code] = $entry;
+        return $this->entries[$card->code()] = $entry;
     }
 
     private function unset_entry(DeckEntry $entry): void
@@ -121,6 +111,3 @@ class Deck implements \Countable
         unset($this->entries[$entry->card()->code]);
     }
 }
-
-
-class DeckTypeMismatchException extends \Exception {}
