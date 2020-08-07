@@ -51,13 +51,13 @@ $side  = $decks->side;
 
 
 
-$y = 60;
+$x = 25;
 $width = 902;
 $spacing = new Spacing(10, 7);
 
 $tables = [
     'main' => [
-        'root' => new Vector(25, $y),
+        'root' => new Vector($x, 60),
         'spacing' => $spacing,
         'width' => $width,
         'height' => 526,
@@ -68,7 +68,7 @@ $tables = [
         'overlap' => CellOverlap::VERTICAL
     ],
     'extra' => [
-        'root' => new Vector(646, $y),
+        'root' => new Vector($x, 645),
         'spacing' => $spacing,
         'width' => $width,
         'height' => CARD_HEIGHT,
@@ -79,7 +79,7 @@ $tables = [
         'overlap' => CellOverlap::HORIZONTAL
     ],
     'side' => [
-        'root' => new Vector(822, $y),
+        'root' => new Vector($x, 818),
         'spacing' => $spacing,
         'width' => $width,
         'height' => CARD_HEIGHT,
