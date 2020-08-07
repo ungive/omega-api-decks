@@ -2,218 +2,173 @@
 
 namespace Format;
 
-use Game\Data\Repository;
+use Game\Deck;
+use Game\DeckList;
 use Game\DeckType;
+use Game\ExtraDeck;
 use Game\MainDeck;
-
-#
-# -*- LIST -*-
-#
-# - any non-extra-deck card goes to the main deck
-# - the first 15 extra deck cards go to the extra deck
-# - after the first extra deck card:
-#   any non-extra-deck card ...
-#     if main < 40: ... goes to the side deck
-#     else:         ... goes to the main deck
-#   any extra-deck card ...
-#     ... goes to the side deck
-#
-
-#
-# - extract the first 15 (or less) extra deck cards -> extra deck
-# - extract the last 15 (or less) cards until the position at which
-#   the first extra deck card was encountered (inclusive) -> side deck
-# - the remaining cards go to the -> main deck
-#
-
-#
-# in case there are no extra deck cards (acting as separator),
-# the cards after the last line break belong to the side deck.
-#
+use Game\SideDeck;
+use Game\Repository\Repository;
 
 
 class NameFormatDecodeStrategy implements FormatDecodeStrategy
 {
-    public Repository $repository;
+    // needed amount of empty spaces before the side deck
+    // in case there are no extra deck cards.
+    const SIDE_PRECEDING_EMPTY_LINES = 2;
+
+    private Repository $repository;
 
     public function __construct(Repository $repository)
     {
         $this->repository = $repository;
     }
 
-    public function decode(string $encoded): ParsedCardList
+    public function decode(string $input): DeckList
     {
-        $groups = [];
-        $current = new ParsedCardList();
+        $cards = []; // new CardList();
 
-        $lines = explode("\n", $encoded);
-        foreach ($lines as $index => $line) {
-            $line = trim($line);
+        // a card at index n is the first card of the last consecutive
+        // block of cards that is preceded by n lines of whitespace.
+        // all cards after the greatest number of empty lines will be
+        // considered side deck cards (assuming there are no extra deck cards).
+        $potential_first_side_cards = [];
+        $separator_height = 0;
 
-            if (strlen($line) === 0) { // empty line
-                if (count($current) > 0) { // previous line was also empty
-                    $groups[] = $current;
-                    $current = new ParsedCardList();
-                }
+        $separator_count = 0;
+
+        $entries = explode("\n", trim($input));
+        foreach ($entries as $index => $entry) {
+            $line = $index + 1;
+            $entry = trim($entry);
+
+            if (strlen($entry) === 0) {
+                $separator_height++;
                 continue;
             }
 
             $matches = [];
-            $result = preg_match("/(\\d+)x?\\s\\s*(.*)/", $line, $matches);
+            $result = preg_match("/\\s*(\\d+)x?\\s\\s*(.+)\\s*/", $entry, $matches);
 
             if ($result === 0 || $result === false)
-                throw new FormatDecodeException("unable to match line " . ($index + 1));
+                throw new FormatDecodeException(
+                    "unable to parse line $line of input");
 
-            $card_count = $matches[1];
+            $card_count = intval($matches[1]);
             $card_name = $matches[2];
 
-            if (!is_numeric($card_count))
-                throw new FormatDecodeException("expected a numeric value");
-            if (strlen($card_name) === 0)
-                throw new FormatDecodeException("cannot have an empty name");
+            // before we save the "first side card", we need to make sure
+            // that up until this point the main deck has enough cards,
+            // otherwise it wouldn't make sense to potentially put the
+            // remaining cards into the side deck.
+            $main_deck_satisfied = count($cards) >= MainDeck::MIN_SIZE;
 
-            $card_count = intval($card_count);
-
+            $card = $this->repository->get_card_by_name($card_name);
             for ($i = 0; $i < $card_count; $i++)
-                $current[] = ParsedCard::with_name($card_name);
-        }
+                $cards[] = $card;
 
-        if (count($current) > 0)
-            $groups[] = $current;
-
-
-        $main_count = 0;
-        $i = 0; $j = 0;
-
-        // the first 40 cards are definitely in the main deck.
-        for (; $i < count($groups); $i++, $j = 0) {
-            $cards = $groups[$i];
-            for (; $j < count($cards); $j++) {
-                if ($main_count === MainDeck::MIN_SIZE)
-                    break 2; // break all loops
-
-                $card = $cards[$j];
-                $card->deck_types->add(DeckType::MAIN);
-                $main_count += 1;
+            if ($separator_height > 0) {
+                if ($main_deck_satisfied)
+                    $potential_first_side_cards[$separator_height] = $card;
+                $separator_height = 0;
+                $separator_count++;
             }
         }
 
-        // remove all groups we've completed.
-        array_splice($groups, 0, $i);
-        $i = 0; // we removed all preceding elements.
+        $deck_list = new DeckList();
 
-        // remove all remaining cards we've completed.
-        $cards = $groups[$i]->array();
-        array_splice($cards, 0, $j);
-        $groups[$i]->exchangeArray($cards);
-        $j = 0;
+        $extra_deck = $deck_list->extra;
+        $side_deck  = $deck_list->side;
+        $main_deck  = $deck_list->main;
 
+        // will hold the first card before the first extra
+        // deck card, or null if there are no extra deck cards.
+        $card_before_extra_deck = null;
 
+        $move_card2 = function (int $key, array &$src, Deck $dest) {
+            if (count($dest) >= $dest::MAX_SIZE)
+                return false;
 
+            $dest->add($src[$key]);
+            unset($src[$key]);
 
-        $cccount = 0;
-        foreach ($groups as $group) {
-            foreach ($group as $card) {
-                $decks = "";
+            return true;
+        };
 
-                if ($card->deck_types->has(DeckType::MAIN)) $decks .= "Main, ";
-                if ($card->deck_types->has(DeckType::EXTRA)) $decks .= "Extra, ";
-                if ($card->deck_types->has(DeckType::SIDE)) $decks .= "Side, ";
+        // the first 15 extra deck cards go into the extra deck.
+        foreach ($cards as $key => $card) {
 
-                $cccount += 1;
-                var_dump("[" . $cccount . "] " . $card->name . " in " . $decks);
+            if ($card->deck_type !== DeckType::EXTRA) {
+                if (count($extra_deck) === 0)
+                    $card_before_extra_deck = $card;
+                continue;
+            }
+
+            // move the cards of this entry to the extra deck.
+            if ($move_card2($key, $cards, $extra_deck))
+                continue;
+
+            // if not all cards could be added (because the extra deck
+            // is full), then add the remaining cards to the side deck.
+            if (!$move_card2($key, $cards, $side_deck))
+                throw new FormatDecodeException(implode(" ", [
+                    "too many Extra Deck cards, no more than",
+                    ExtraDeck::MAX_SIZE + SideDeck::MAX_SIZE,
+                    "allowed"
+                ]));
+        }
+
+        $consecutive_spaces = 0; // largest number of consecutive spaces.
+        if (count($potential_first_side_cards) > 0)
+            $consecutive_spaces = max(array_keys($potential_first_side_cards));
+
+        // allow a single space with only one separating line.
+        if ($separator_count > 1)
+            if ($consecutive_spaces < self::SIDE_PRECEDING_EMPTY_LINES)
+                $consecutive_spaces = 0;
+
+        if (count($extra_deck) === 0 && $consecutive_spaces > 0) {
+            // there are no extra deck cards, so in order to separate
+            // main deck cards from side deck cards, we split at the last
+            // separator entry that is found in our card list.
+
+            $first_side_card = $potential_first_side_cards[$consecutive_spaces];
+
+            $found_first = false;
+            foreach ($cards as $key => $card) {
+                if (!$found_first && $card !== $first_side_card)
+                    continue;
+
+                $found_first = true;
+                $move_card2($key, $cards, $side_deck);
+            }
+        }
+        else {
+            // the cards from the end of the list until the position at which
+            // the first extra deck card was encountered belong to the side deck.
+            foreach (array_reverse($cards) as $key => $card) {
+                if ($card === $card_before_extra_deck)
+                    break; // done
+                if (!$move_card2($key, $cards, $side_deck))
+                    // there are cards that don't fit into the side deck anymore.
+                    // those will be added to the main deck instead, even though
+                    // they appeared behind the first extra deck card.
+                    break;
             }
         }
 
-        return $current;
+        // the remaining cards go to the main deck.
+        foreach ($cards as $key => $card)
+            if (!$move_card2($key, $cards, $main_deck))
+                break;
+
+        // if there are still cards remaining, try to put them into the side deck
+        foreach($cards as $key => $card)
+            if (!$move_card2($key, $cards, $side_deck))
+                throw new FormatDecodeException(implode(" ", [
+                    "too many cards, Main and Side Deck have reached their limit"
+                ]));
+
+        return $deck_list;
     }
-
-
 }
-
-
-// 1 Dark Spirit of Malice
-// 1 Dark Spirit of Banishment
-// 1 Archfiend Empress
-// 1 Curse Necrofear
-// 1 Grinder Golem
-// 1 Abominable Unchained Soul
-// 1 Unchained Soul of Disaster
-// 3 Unchained Twins – Sarama
-// 3 Unchained Twins – Aruha
-// 3 Graff, Malebranche of the Burning Abyss
-// 1 Cir, Malebranche of the Burning Abyss
-// 1 Scarm, Malebranche of the Burning Abyss
-// 1 Barbar, Malebranche of the Burning Abyss
-// 2 Tour Guide From the Underworld
-// 1 Fiendish Rhino Warrior
-
-// 1 Spirit Message “I”
-// 1 Spirit Message “L”
-// 1 Spirit Message “N”
-// 1 Spirit Message “A”
-// 3 Dark Spirit’s Mastery
-// 2 Dark Sanctuary
-// 3 Abomination’s Prison
-// 1 Card Destruction
-
-// 1 Destiny Board
-// 3 Abominable Chamber of the Unchained
-// 1 Call of the Archfiend
-
-// 2 Unchained Soul of Rage
-// 1 Unchained Abomination
-// 2 Unchained Soul of Anguish
-// 1 Cherubini, Ebon Angel of the Burning Abyss
-// 2 Dante, Traveler of the Burning Abyss
-// 1 Dante, Pilgrim of the Burning Abyss
-// 1 Security Dragon
-// 2 Linkuriboh
-// 1 Akashic Magician
-// 1 Mekk-Knight Crusadia Avramax
-// 1 Knightmare Phoenix
-
-
-
-
-
-// Dark Spirit of Malice
-// Dark Spirit of Banishment
-// Archfiend Empress
-// Curse Necrofear
-// Grinder Golem
-// Abominable Unchained Soul
-// Unchained Soul of Disaster
-// Unchained Twins - Sarama
-// Unchained Twins - Aruha
-// Graff, Malebranche of the Burning Abyss
-// Cir, Malebranche of the Burning Abyss
-// Scarm, Malebranche of the Burning Abyss
-// Barbar, Malebranche of the Burning Abyss
-// Tour Guide From the Underworld
-// Fiendish Rhino Warrior
-
-// Spirit Message "I"
-// Spirit Message "L"
-// Spirit Message "N"
-// Spirit Message "A"
-// Dark Spirit's Mastery
-// Dark Sanctuary
-// Abomination's Prison
-// Card Destruction
-
-// Destiny Board
-// Abominable Chamber of the Unchained
-// Call of the Archfiend
-
-// Unchained Soul of Rage
-// Unchained Abomination
-// Unchained Soul of Anguish
-// Cherubini, Ebon Angel of the Burning Abyss
-// Dante, Traveler of the Burning Abyss
-// Dante, Pilgrim of the Burning Abyss
-// Security Dragon
-// Linkuriboh
-// Akashic Magician
-// Mekk-Knight Crusadia Avramax
-// Knightmare Phoenix

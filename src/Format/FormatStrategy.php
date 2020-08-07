@@ -2,16 +2,17 @@
 
 namespace Format;
 
-use Game\Data\Repository;
 use \Game\DeckList;
 
 
-interface FormatEncodeStrategy
+interface FormatStrategy {}
+
+interface FormatEncodeStrategy extends FormatStrategy
 {
     function encode(DeckList $deck): string;
 }
 
-interface FormatDecodeStrategy
+interface FormatDecodeStrategy extends FormatStrategy
 {
-    function decode(string $encoded): ParsedCardList;
+    function decode(string $encoded): DeckList;
 }

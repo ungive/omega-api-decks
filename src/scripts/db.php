@@ -1,5 +1,11 @@
 <?php
 
+namespace Db;
+
+use function Utility\download_file;
+use function Utility\temp_filename;
+
+
 const SEPARATOR = ',';
 const PLACEHOLDER = '?';
 
@@ -21,12 +27,12 @@ function insert_chunked(\PDO $db, string $table,
 insert:
     $placeholders = implode(SEPARATOR, array_fill(0, $chunk_size, "($row_placeholders)"));
     $statement = $db->prepare("$base_query $placeholders;");
-    if (!$statement)
-        return false;
 
     foreach ($chunks as $chunk) {
         $values = array_merge(...$chunk);
-        $statement->execute($values);
+        $retval = $statement->execute($values);
+        if (!$retval)
+            return false;
     }
 
     // last chunk
@@ -42,63 +48,141 @@ insert:
 
 function sanitize_name(string $name): string
 {
-    $name = preg_replace("/\s+/", "_", $name);
     $name = strtolower($name);
-    $name = preg_replace("/[^_a-z0-9]/", "-", $name);
+    $name = preg_replace("/(\s*[^a-z0-9]\s*)+/", " ", $name);
+    $name = trim($name);
     return $name;
 }
 
-class FileLock
+/**
+* returns the first two identifying characters of a name.
+* @param string $s the name in its sanitized form
+*/
+function name_cluster(string $s, string $placeholder = '_'): string
 {
-    private string $filename;
-    private bool $is_locked = false;
-
-    private $file_handle = null;
-
-    public function __construct(string $filename)
-    {
-        $this->filename = $filename;
+    switch (strlen($s)) {
+    default: break;
+    case 1: return $s[0] . $placeholder;
+    case 0: return $placeholder . $placeholder;
     }
 
-    public function lock(): bool
-    {
-        $this->file_handle = fopen($this->filename, 'a+');
-        chmod($this->filename, 0660);
+    $c1 = $s[0];
+    $c2 = ctype_space($s[1]) ? $s[2] : $s[1];
+    return $c1 . $c2;
+}
 
-        if ($success = $this->file_handle !== false) {
-            flock($this->file_handle, LOCK_EX);
-            $this->is_locked = true;
-        }
+function update(string $source_url): bool
+{
+    $log = get_logger('database');
 
-        return $success;
+    $log->info("downloading database from remote...");
+
+    $source_path = temp_filename();
+    $download_success = download_file($source_path, $source_url, $status_code);
+
+    if (!$download_success) {
+        $message = "download failed ";
+        if ($status_code)
+            $message .= " (HTTP status code $status_code)";
+
+        $log->error($message);
+        return false;
     }
 
-    public function unlock()
-    {
-        if (!$this->is_locked)
-            return;
+    $log->info("download successful. converting...");
 
-        flock($this->file_handle, LOCK_UN);
-        $this->is_locked = false;
 
-        fclose($this->file_handle);
-        $this->file_handle = null;
+    $src_db = new \PDO('sqlite:' . $source_path);
+    $src_db->exec("CREATE INDEX idx_texts_name ON texts(name);");
+    $select_stmt = $src_db->prepare(<<<SQL
 
-        if (file_exists($this->filename))
-            unlink($this->filename);
+        SELECT
+            id,
+            name,
+            CASE
+                WHEN type & 0x40 THEN 'EXTRA' -- Fusion
+                WHEN type & 0x2000 THEN 'EXTRA' -- Synchro
+                WHEN type & 0x800000 THEN 'EXTRA' -- XYZ
+                WHEN type & 0x4000000 THEN 'EXTRA' -- Link
+                ELSE 'MAIN'
+            END AS type,
+            -- one name may only be matched with one card (not multiple).
+            LAG(alias, 1, NULL) OVER w1 IS NULL AS match_name
+        FROM texts
+        INNER JOIN datas USING(id)
+        WINDOW w1 AS (
+            PARTITION BY name
+            ORDER BY
+                alias = 0 DESC, -- prefer original cards
+                ot < 4 DESC, -- prefer official cards
+                id -- prefer smaller IDs
+        )
+
+    SQL);
+    $select_stmt->execute();
+    $rows = $select_stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+    $src_db = null; // close connection
+    unlink($source_path); // not needed anymore
+
+
+    $write_path = temp_filename();
+    $dest_db = new \PDO('sqlite:' . $write_path);
+    $dest_db->exec(<<<SQL
+
+        CREATE TABLE card (
+            id INTEGER PRIMARY KEY,
+            cluster CHAR(2),
+            name VARCHAR(128),
+            type VARCHAR(8),
+            match_name INTEGER
+        );
+
+    SQL);
+    $dest_db->exec(<<<SQL
+
+        ALTER TABLE card
+            ADD CONSTRAINT chk_card_type CHECK(
+                type IN ('MAIN', 'EXTRA')
+            );
+
+    SQL);
+    $dest_db->exec("CREATE INDEX idx_card_cluster ON card(cluster);");
+    $dest_db->exec("CREATE INDEX idx_card_name ON card(name);");
+    $dest_db->exec("CREATE INDEX idx_card_type ON card(type);");
+    $dest_db->exec("CREATE INDEX idx_card_match_name ON card(match_name);");
+
+    # TODO: fetch source rows in a chunked manner.
+
+    $cards = [];
+    foreach ($rows as $row) {
+        $sanitized_name = sanitize_name($row['name']);
+        $name_cluster = name_cluster($sanitized_name);
+
+        $cards[] = [
+            intval($row['id']),
+            $name_cluster,
+            $sanitized_name,
+            $row['type'],
+            intval($row['match_name'])
+        ];
     }
 
-    public function is_locked()
-    {
-        if ($this->is_locked) return true;
-        if ($this->file_handle === null)
-            return false;
+    $dest_db->beginTransaction();
+    $columns = [ 'id', 'cluster', 'name', 'type', 'match_name' ];
+    $retval = insert_chunked($dest_db, 'card', $columns, $cards, 256);
 
-        $fp = fopen($this->filename, 'a+');
-        flock($fp, LOCK_EX | LOCK_NB, $wouldblock);
-        flock($fp, LOCK_UN);
-        fclose($fp);
-
-        return $wouldblock === 1;
+    if (!$retval) {
+        $log->error('failed to insert rows');
+        return false;
     }
+
+    $dest_db->commit();
+
+    rename($write_path, DB_FILE);
+    chmod(DB_FILE, 0664); // anyone may read
+
+    $log->info("SUCCESS - update completed");
+
+    return true;
 }

@@ -1,0 +1,3 @@
+<?php
+
+# disable warnings

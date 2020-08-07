@@ -7,7 +7,8 @@ class DeckEntry implements \Countable
 {
     const MAX_COUNT = 3;
 
-    private Card $card;
+    public Card $card;
+
     private int $count = 0;
 
     public function __construct(Card $card, int $count = 1)
@@ -25,7 +26,7 @@ class DeckEntry implements \Countable
 
         if ($count > self::MAX_COUNT)
             throw new CopyLimitExceededException(
-                "maximum number of card copies exceeded");
+                "maximum number of copies exceeded");
 
         $this->count = $count;
     }
@@ -37,7 +38,7 @@ class DeckEntry implements \Countable
 
     public function subtract_count(int $count): void
     {
-        $this->add_count(-1);
+        $this->add_count((-1) * $count);
     }
 
     public function increment(): void { $this->add_count(1); }

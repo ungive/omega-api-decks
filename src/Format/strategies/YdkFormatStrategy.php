@@ -12,7 +12,7 @@ class YdkFormatStrategy implements FormatEncodeStrategy, FormatDecodeStrategy
         throw new FormatException("not implemented");
     }
 
-    public function decode(string $encoded): ParsedCardList
+    public function decode(string $encoded): DeckList
     {
         throw new FormatDecodeException("not implemented");
     }

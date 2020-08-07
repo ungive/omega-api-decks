@@ -2,6 +2,8 @@
 
 namespace Format;
 
+use \Game\Card;
+use \Game\Repository\Repository;
 use \Game\MainDeck;
 use \Game\ExtraDeck;
 use \Game\SideDeck;
@@ -22,18 +24,18 @@ use \Game\DeckList;
 
 class OmegaFormatStrategy implements FormatEncodeStrategy, FormatDecodeStrategy
 {
+    public Repository $repository;
+
+    public function __construct(Repository $repository)
+    {
+        $this->repository = $repository;
+    }
+
     public function encode(DeckList $list): string
     {
-        $raw = "";
-
+        $raw  = "";
         $raw .= pack('C', count($list->main) + count($list->extra));
         $raw .= pack('C', count($list->side));
-
-        var_dump(count($list->main));
-        var_dump(count($list->extra));
-        var_dump(count($list->side));
-        var_dump($list);
-
         $raw .= pack('V*', ...$list->main->card_codes());
         $raw .= pack('V*', ...$list->extra->card_codes());
         $raw .= pack('V*', ...$list->side->card_codes());
@@ -44,26 +46,28 @@ class OmegaFormatStrategy implements FormatEncodeStrategy, FormatDecodeStrategy
         return $encoded;
     }
 
-    public function decode(string $encoded): ParsedCardList
+    public function decode(string $encoded): DeckList
     {
+        $encoded = trim($encoded);
+
         $deflated = base64_decode($encoded);
         if ($deflated === false)
             throw new FormatDecodeException("could not decode base64");
 
         $raw = gzinflate($deflated);
         if ($raw === false)
-            throw new FormatDecodeException("could not inflate data");
+            throw new FormatDecodeException("could not inflate compressed data");
 
         # the first byte contains the size of the main and extra deck.
-        $main_and_extra_size = $this->unpack('C', $raw)[1];
+        $main_and_extra_size = $this->unpack('C', $raw);
 
         if ($main_and_extra_size < MainDeck::MIN_SIZE + ExtraDeck::MIN_SIZE)
-            throw new FormatDecodeException("Main or Extra deck is too small");
+            throw new FormatDecodeException("Main or Extra Deck is too small");
         if ($main_and_extra_size > MainDeck::MAX_SIZE + ExtraDeck::MAX_SIZE)
-            throw new FormatDecodeException("Main or Extra deck is too large");
+            throw new FormatDecodeException("Main or Extra Deck is too large");
 
         # the second byte represents the size of the side deck.
-        $side_count = $this->unpack('C', $raw)[1];
+        $side_count = $this->unpack('C', $raw);
 
         if ($side_count < SideDeck::MIN_SIZE)
             throw new FormatDecodeException("Side Deck is too small");
@@ -78,29 +82,26 @@ class OmegaFormatStrategy implements FormatEncodeStrategy, FormatDecodeStrategy
         $main_count = max(MainDeck::MIN_SIZE, $main_and_extra_size - ExtraDeck::MAX_SIZE);
         $main_or_extra_count = $main_and_extra_size - $main_count;
 
-        $list = new ParsedCardList();
+        $deck_list = new DeckList();
 
         for ($i = 0; $i < $main_count; $i++)
-            $list[] = $this->unpack_card($raw, DeckType::MAIN);
+            $deck_list->main->add(new Card($this->unpack_code($raw), DeckType::MAIN));
 
-        for ($i = 0; $i < $main_or_extra_count; $i++)
-            $list[] = $this->unpack_card($raw, DeckType::MAIN | DeckType::EXTRA);
+        for ($i = 0; $i < $main_or_extra_count; $i++) {
+            $code = $this->unpack_code($raw);
+            $card = $this->repository->get_card_by_code($code);
+            $deck_list->get($card->deck_type)->add($card);
+        }
 
         for ($i = 0; $i < $side_count; $i++)
-            $list[] = $this->unpack_card($raw, DeckType::SIDE);
+            $deck_list->side->add(new Card($this->unpack_code($raw)));
 
-        return $list;
+        return $deck_list;
     }
 
-    // private function unpack_cards(int $n, string &$raw, int $deck_type): ParsedCardList
-    // {
-    //     for ($i = 0; $i < $n; $i++)
-    //         $list[] = $this->unpack_card($raw, DeckType::MAIN);
-    // }
-
-    private function unpack_card(string &$raw, int $deck_type): ParsedCard
+    private function unpack_code(&$data)
     {
-        return ParsedCard::with_code($this->unpack('V', $raw)[1], $deck_type);
+        return $this->unpack('V', $data);
     }
 
     private function unpack(string $format, string &$data)
@@ -117,6 +118,6 @@ class OmegaFormatStrategy implements FormatEncodeStrategy, FormatDecodeStrategy
         }
 
         $data = substr($data, $count);
-        return $unpacked;
+        return $unpacked[1];
     }
 }

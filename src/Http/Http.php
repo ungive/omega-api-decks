@@ -2,8 +2,8 @@
 
 namespace Http;
 
-use \Http\Serializer\ResponseSerializer;
-use \Http\Serializer\JsonResponseSerializer;
+use \Http\ResponseSerializer;
+use \Http\JsonResponseSerializer;
 
 
 class Http
@@ -16,14 +16,17 @@ class Http
 
     const INTERNAL_SERVER_ERROR = 500;
 
+    private static string $response_serializer_type
+        = JsonResponseSerializer::class;
+
     public static function allow_methods(string ...$methods): void
     {
         foreach ($methods as $method)
-            if (strtoupper($method) === strtoupper($_SERVER['REQUEST_METHOD']))
+            if ($method === $_SERVER['REQUEST_METHOD'])
                 return;
 
-        http_response_code(Http::METHOD_NOT_ALLOWED);
-        die;
+        self::response_code(self::METHOD_NOT_ALLOWED);
+        self::close();
     }
 
     public static function allow_method(string $method): void
@@ -37,33 +40,47 @@ class Http
         if (!isset($_GET[$name])) {
             if (!$required) return null;
 
-            $message = "parameter '$name' is required";
-            self::set_json_error_response(Http::BAD_REQUEST, $message);
+            $message = "query parameter '$name' is required";
+            self::fail($message, self::BAD_REQUEST);
         }
 
         return $_GET[$name];
     }
 
-    public static function set_response(Response $response,
-                                        ResponseSerializer $serializer): void
+    public static function response_code(?int $response_code = null): int
     {
-        $content_type = $serializer->get_content_type();
-        header('Content-Type: ' . $content_type);
+        return http_response_code($response_code);
+    }
+
+    public static function header(string $name, $value, bool $replace = true,
+                                  int $http_response_code = null): void
+    {
+        header("$name: $value", $replace, $http_response_code);
+    }
+
+    public static function set_response(Response $response): void
+    {
+        $serializer = new self::$response_serializer_type();
+        $content_type = $serializer->content_type();
+        self::header('Content-Type', $content_type);
+
         echo $serializer->serialize($response);
-        Http::exit($response->code);
+        Http::close($response->code);
     }
 
-    public static function set_json_error_response(int $code,
-                                                   string $message): void
+    public static function fail(string $message,
+                                int $code = self::INTERNAL_SERVER_ERROR): void
     {
+        get_logger('http')->alert("failed with: $message");
+
         $response = new ErrorResponse($code, $message);
-        $serializer = new JsonResponseSerializer();
-        self::set_response($response, $serializer);
+        self::set_response($response);
     }
 
-    public static function exit(int $code = Http::OK)
+    public static function close(?int $code = null)
     {
-        http_response_code($code);
+        if ($code !== null)
+            self::response_code($code);
         exit;
     }
 }

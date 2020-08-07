@@ -1,0 +1,6 @@
+.git/
+vendor/
+
+.env
+*.db
+*.cdb

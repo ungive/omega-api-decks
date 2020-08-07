@@ -2,7 +2,7 @@
 
 namespace Format;
 
-use \Game\CardList;
+use \Game\Card;
 use \Game\Deck;
 use \Game\DeckList;
 use \Game\DeckType;
@@ -10,6 +10,8 @@ use \Game\DeckType;
 use function \Utility\starts_with;
 use function \Utility\ends_with;
 
+
+# TODO: handle errors better and encapsulate un/pack a little more.
 
 class YdkeFormatStrategy implements FormatEncodeStrategy, FormatDecodeStrategy
 {
@@ -33,7 +35,7 @@ class YdkeFormatStrategy implements FormatEncodeStrategy, FormatDecodeStrategy
         return $encoded;
     }
 
-    public function decode(string $encoded): ParsedCardList
+    public function decode(string $encoded): DeckList
     {
         if (!starts_with($encoded, self::PREFIX))
             throw new FormatDecodeException("missing prefix: " . self::PREFIX);
@@ -48,32 +50,33 @@ class YdkeFormatStrategy implements FormatEncodeStrategy, FormatDecodeStrategy
         if (count($parts) != DeckList::DECK_COUNT)
             throw new FormatDecodeException("invalid number of decks");
 
-        $list = new ParsedCardList();
-        $list->append_all($this->decode_deck($parts[0], DeckType::MAIN));
-        $list->append_all($this->decode_deck($parts[1], DeckType::EXTRA));
-        $list->append_all($this->decode_deck($parts[2], DeckType::SIDE));
+        $deck_list = new DeckList();
 
-        return $list;
+        foreach ($this->decode_codes($parts[0]) as $code)
+            $deck_list->main->add(new Card($code, DeckType::MAIN));
+
+        foreach ($this->decode_codes($parts[1]) as $code)
+            $deck_list->extra->add(new Card($code, DeckType::EXTRA));
+
+        foreach ($this->decode_codes($parts[2]) as $code)
+            $deck_list->side->add(new Card($code));
+
+        return $deck_list;
     }
 
 
     private function encode_deck(Deck $deck): string
     {
         $raw = "";
-
         foreach ($deck->cards() as $card)
-            $raw .= pack('V', $card->code());
-
+            $raw .= pack('V', $card->code);
         return base64_encode($raw);
     }
 
-    private function decode_deck(string $encoded, int $deck_type): ParsedCardList
+    private function decode_codes(string $encoded): array
     {
-        $raw = base64_decode($encoded, true);
-
-        if (!$raw)
+        if (!($raw = base64_decode($encoded, true)))
             throw new FormatDecodeException("malformed base64");
-
-        return ParsedCardList::from_codes(unpack("V*", $raw), $deck_type);
+        return unpack("V*", $raw);
     }
 }

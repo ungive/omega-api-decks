@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+
+  # production:
+  #   build: .
+  #   ports:
+  #     - ${PORT}:80
+  #   env_file: .env
+  #   volumnes:
+  #     - ./data:/opt/data
+
+  development:
+    build: .
+    ports:
+      - ${PORT}:80
+    env_file: .env.dev
+    # environment:
+    #   - # define download urls here as file:///
+    volumes:
+      - ./src:/var/www/src
+      - ./public:/var/www/public
+      - ./vendor:/var/www/vendor
+      - ./data:/opt/data
+      # define volume that exposes a local database to a directory in the container.
+      # also define a volume that exposes a directory with card images.

@@ -2,6 +2,7 @@
 
 namespace Utility;
 
+use Http\Http;
 
 function starts_with($haystack, $needle)
 {
@@ -52,16 +53,85 @@ function download_file(string $dest_file, string $url, ?int &$status_code): bool
 
     if ($is_error = curl_errno($ch) !== 0)
         get_logger()->warning('cURL: ' . curl_error($ch));
-    else
-        $status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    else {
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $is_error = $code != 0 && $code !== Http::OK;
+        if ($code !== 0) $status_code = $code;
+    }
 
     curl_close($ch);
     fclose($fp);
 
-    if ($is_error || $status_code !== 200) {
+    if ($is_error) {
         unlink($dest_file);
         return false;
     }
 
     return true;
+}
+
+class FileLock
+{
+    private string $filename;
+    private bool $is_locked = false;
+
+    private $file_handle = null;
+
+    public function __construct(string $filename)
+    {
+        $this->filename = $filename;
+    }
+
+    public function lock(): bool
+    {
+        $this->file_handle = fopen($this->filename, 'a+');
+        chmod($this->filename, 0660);
+
+        if ($success = $this->file_handle !== false) {
+            flock($this->file_handle, LOCK_EX);
+            $this->is_locked = true;
+        }
+
+        return $success;
+    }
+
+    public function unlock()
+    {
+        if (!$this->is_locked)
+            return;
+
+        flock($this->file_handle, LOCK_UN);
+        $this->is_locked = false;
+
+        fclose($this->file_handle);
+        $this->file_handle = null;
+
+        if (file_exists($this->filename))
+            unlink($this->filename);
+    }
+
+    public function is_locked()
+    {
+        if ($this->is_locked) return true;
+        // if ($this->file_handle === null)
+        //     return false;
+
+        $fp = fopen($this->filename, 'a+');
+        flock($fp, LOCK_EX | LOCK_NB, $wouldblock);
+        flock($fp, LOCK_UN);
+        fclose($fp);
+
+        return $wouldblock === 1;
+    }
+}
+
+function continue_in_background(bool $ignore_user_abort = true,
+                                int $time_limit = 0): void
+{
+    ignore_user_abort($ignore_user_abort);
+    set_time_limit($time_limit);
+
+    header("Connection: close");
+    ob_end_flush();
+    flush();
 }

@@ -3,19 +3,19 @@
 namespace Game;
 
 
-class DeckList // implements \ArrayAccess
+class DeckList
 {
     const DECK_COUNT = 3;
 
-    public Deck $main;
-    public Deck $extra;
-    public Deck $side;
+    public MainDeck  $main;
+    public ExtraDeck $extra;
+    public SideDeck  $side;
 
     public function __construct()
     {
-        $this->main  = new Deck();
-        $this->extra = new Deck();
-        $this->side  = new Deck();
+        $this->main  = new MainDeck();
+        $this->extra = new ExtraDeck();
+        $this->side  = new SideDeck();
     }
 
     public function get(int $deck_type): Deck
@@ -32,36 +32,16 @@ class DeckList // implements \ArrayAccess
         return null;
     }
 
+    public function decks(): \Generator
+    {
+        yield $this->main;
+        yield $this->extra;
+        yield $this->side;
+    }
 
-
-    // public function offsetSet($deck_type, $deck)
-    // {
-    //     if ($deck_type === null) {
-    //         if ($deck->type === null)
-    //             throw new \InvalidArgumentException("missing deck type");
-
-    //         return $this->offsetSet($deck->type, $deck);
-    //     }
-
-    //     $this->decks[$deck_type] = $deck;
-    // }
-
-    // public function offsetExists($deck_type)
-    // {
-    //     return isset($this->decks[$deck_type]);
-    // }
-
-    // public function offsetUnset($deck_type)
-    // {
-    //     unset($this->decks[$deck_type]);
-    // }
-
-    // public function offsetGet($deck_type)
-    // {
-    //     if ($this->offsetExists($deck_type))
-    //         return $this->decks[$deck_type];
-
-    //     return null;
-    // }
-
+    public function validate(bool $allow_too_little = false): void
+    {
+        foreach ($this->decks() as $deck)
+            $deck->validate($allow_too_little);
+    }
 }

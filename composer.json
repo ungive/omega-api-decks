@@ -1,13 +1,9 @@
 {
   "require": {
     "php": "^7.4.0",
-    "ext-imagick": "*",
     "monolog/monolog": "^2.1"
   },
-  "require-dev": {
-    "heroku/heroku-buildpack-php": "*",
-    "phpunit/phpunit": "^9.2"
-  },
+  "require-dev": {},
   "autoload": {
     "classmap": [
       "src/"
@@ -16,7 +12,8 @@
       "src/scripts/const.php",
       "src/scripts/db.php",
       "src/scripts/helpers.php",
-      "src/scripts/log.php"
+      "src/scripts/log.php",
+      "src/Config.php"
     ]
   }
 }

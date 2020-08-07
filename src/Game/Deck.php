@@ -1,12 +1,13 @@
 <?php
 
 namespace Game;
-# TODO: rename to Domain
 
 
-# TODO: make abstract and add abstract static method get_upper_limit() and get_lower_limit()
 class Deck implements \Countable
 {
+    const MIN_SIZE = 0;
+    const MAX_SIZE = PHP_INT_MAX;
+
     private array $entries = [];
     private int $count = 0;
 
@@ -19,18 +20,19 @@ class Deck implements \Countable
 
     public function set(Card $card, int $count): DeckEntry
     {
-        if (isset($this->entries[$card->code()]))
-            $this->count -= $this->entries[$card->code()]->count;
+        if (isset($this->entries[$card->code])) {
+            $this->subtract_count($this->entries[$card->code]->count);
+            return $this->entries[$card->code];
+        }
 
-        $this->count += $count;
-        return $this->set_entry($card, new DeckEntry($card, $count));
+        return $this->add_entry(new DeckEntry($card, $count));
     }
 
     public function add(Card $card, int $count = 1): DeckEntry
     {
         if ($entry = $this->get_or_null($card)) {
             $entry->add_count($count);
-            $this->count += $count;
+            $this->add_count($count);
             return $entry;
         }
 
@@ -45,13 +47,12 @@ class Deck implements \Countable
         $entry = $this->get($card);
 
         if (count($entry) <= $count) {
-            $this->count -= count($entry);
-            $this->unset_entry($card);
+            $this->remove_entry($entry);
             return;
         }
 
         $entry->subtract_count($count);
-        $this->count -= $count;
+        $this->subtract_count($count);
     }
 
     public function remove_one(Card $card): void
@@ -66,7 +67,7 @@ class Deck implements \Countable
 
     public function get(Card $card): DeckEntry
     {
-        return $this->entries[$card->code()];
+        return $this->entries[$card->code];
     }
 
     public function get_or_null(Card $card): ?DeckEntry
@@ -77,37 +78,100 @@ class Deck implements \Countable
     public function count(): int { return $this->count; }
 
 
+    public function entries(): \Generator
+    {
+        foreach ($this->entries as $entry)
+            yield $entry;
+    }
+
     public function cards(): \Generator
     {
         foreach ($this->entries as $entry)
             for ($i = 0; $i < count($entry); $i++)
-                yield $entry->card();
+                yield $entry->card;
+    }
+
+    public function unique_cards(): \Generator
+    {
+        foreach ($this->entries as $entry)
+            yield $entry->card;
     }
 
     public function card_codes(): \Generator
     {
         foreach ($this->cards() as $card)
-            yield $card->code();
+            yield $card->code;
     }
 
-
-# private:
-
-    private function get_entry(Card $card): ?DeckEntry
+    public function unique_card_codes(): \Generator
     {
-        if (isset($this->entries[$card->code()]))
-            return $this->entries[$card->code()];
+        foreach ($this->unique_cards() as $card)
+            yield $card->code;
+    }
+
+    public function has_entry(DeckEntry $entry): bool
+    {
+        if (isset($this->entries[$entry->card->code]))
+            return $this->entries[$entry->card->code] === $entry;
+        return false;
+    }
+
+    public function get_entry(Card $card): ?DeckEntry
+    {
+        if (isset($this->entries[$card->code]))
+            return $this->entries[$card->code];
 
         return null;
     }
 
-    private function set_entry(Card $card, DeckEntry $entry): DeckEntry
+    public function add_entry(DeckEntry $entry): DeckEntry
     {
-        return $this->entries[$card->code()] = $entry;
+        if ($this->has_entry($entry))
+            return $entry;
+
+        $this->add_count(count($entry));
+        return $this->entries[$entry->card->code] = $entry;
     }
 
-    private function unset_entry(DeckEntry $entry): void
+    public function remove_entry(DeckEntry $entry): void
     {
-        unset($this->entries[$entry->card()->code]);
+        if (!$this->has_entry($entry))
+            return;
+
+        $this->subtract_count(count($entry));
+        unset($this->entries[$entry->card->code]);
+    }
+
+    public function validate(bool $allow_too_little = false): void
+    {
+        if (!$allow_too_little && $this->count < $this::MIN_SIZE)
+            throw new DeckLimitException(
+                "the " . $this->get_deck_name() . " cannot have less than " .
+                $this::MIN_SIZE . " cards");
+
+        if ($this->count > $this::MAX_SIZE)
+            throw new DeckLimitException(
+                "the " . $this->get_deck_name() . " cannot have more than " .
+                $this::MAX_SIZE . " cards");
+    }
+
+    public function get_deck_name(): string
+    {
+        $class = get_called_class();
+        $name = substr($class, strrpos($class, '\\') + 1);
+        return trim(preg_replace("/([A-Z])/", ' $1', $name));
+    }
+
+
+    private function add_count(int $diff): void
+    {
+        $this->count += $diff;
+    }
+
+    private function subtract_count(int $diff): void
+    {
+        $this->add_count((-1) * $diff);
     }
 }
+
+class DeckLimitException extends \Exception {}
