@@ -167,8 +167,8 @@ class Image
         return $handle !== false ? new Image($handle, $type) : null;
     }
 
-    public static function from_url(string $url, int $timeout_ms = 0,
-                                    int $type = ImageType::AUTO): ?Image
+    public static function from_url(string $url, int $type = ImageType::AUTO,
+                                    int $timeout_ms = 0): ?Image
     {
         if ($type === ImageType::AUTO)
             $type = ImageType::from_filename($url);
