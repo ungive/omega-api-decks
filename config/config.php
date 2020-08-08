@@ -12,13 +12,8 @@ use Render\Vector;
 # TODO: disable all HTML warnings and errors
 
 
-#####
-// Config::put_env('DATA_DIR', '/Users/jonas/Apache/data');
-// Config::put_env('DATABASE_URL', 'file:///Users/jonas/Apache/deck-list/database.db');
-// Config::put_env('CARD_IMAGE_URL', 'file:///Volumes/Extension/Omega/pics_small');
-// Config::put_env('CARD_IMAGE_URL_EXT', 'jpg');
-// Config::put_env('WEBHOOK_UPDATE_TOKEN', '7925587626b24ee84bf5a86c2634cfa982297e21f9ebfed8efa0f11b621794d3');
-#####
+if (file_exists(__DIR__ . '/config.dev.php'))
+  require(__DIR__ . '/config.dev.php');
 
 
 Config::require_env('DATA_DIR');
@@ -133,7 +128,3 @@ Config::set('tables', [
   ]
 
 ]);
-
-
-if (file_exists(__DIR__ . '/config.dev.php'))
-  require(__DIR__ . '/config.dev.php');
