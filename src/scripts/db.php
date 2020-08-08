@@ -2,6 +2,8 @@
 
 namespace Db;
 
+use Config;
+
 use function Utility\download_file;
 use function Utility\temp_filename;
 
@@ -92,7 +94,7 @@ function update(string $source_url): bool
     $log->info("download successful. converting...");
 
 
-    $src_db = new \PDO('sqlite:' . $source_path);
+    $src_db = new \PDO("sqlite:$source_path");
     $src_db->exec("CREATE INDEX idx_texts_name ON texts(name);");
     $select_stmt = $src_db->prepare(<<<SQL
 
@@ -127,7 +129,7 @@ function update(string $source_url): bool
 
 
     $write_path = temp_filename();
-    $dest_db = new \PDO('sqlite:' . $write_path);
+    $dest_db = new \PDO("sqlite:$write_path");
     $dest_db->exec(<<<SQL
 
         CREATE TABLE card (
@@ -179,8 +181,9 @@ function update(string $source_url): bool
 
     $dest_db->commit();
 
-    rename($write_path, DB_FILE);
-    chmod(DB_FILE, 0664); // anyone may read
+    $dest_path = Config::get('repository')['path'];
+    rename($write_path, $dest_path);
+    chmod($dest_path, 0664); // anyone may read
 
     $log->info("SUCCESS - update completed");
 

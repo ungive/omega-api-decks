@@ -13,4 +13,7 @@ if ($database_url === false) {
 }
 
 
+# TODO: check the update lock file here as well.
+
+
 Db\update($database_url);

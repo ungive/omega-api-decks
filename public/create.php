@@ -1,37 +1,35 @@
 <?php
 
-require('../vendor/autoload.php');
+require(__DIR__ . '/../vendor/autoload.php');
 
 use Format\FormatDecodeException;
+
 use Http\Http;
 use Image\Image;
 use Image\ImageType;
-
-use Render\CellFactory;
-use Render\CellOverlap;
 use Render\Rectangle;
-use Render\Spacing;
-use Render\Table;
-use Render\TableLayout;
 use Render\Vector;
 
 
-$log = get_logger('deck-list');
+$log = get_logger('create');
 
-error_reporting(E_ALL & ~E_WARNING);
+// disable warnings because the omega deck code can emit
+// HTML that messes up any image that we try to transmit.
+# TODO: you can probably disable HTML errors in the config
+error_reporting(error_reporting() & ~E_WARNING);
 
 
 Http::allow_method('GET');
 
 $input = Http::get_query_parameter('list');
-$decoder = Config\get_decoder();
 
 try {
+    $decoder = Config\create_decoder();
     $decks = $decoder->decode($input);
 }
 catch (FormatDecodeException $e) {
     $message = $e->getMessage();
-    Http::fail("could not detect input format: $message", Http::BAD_REQUEST);
+    Http::fail("failed to decode: $message", Http::BAD_REQUEST);
 }
 catch (Exception $e) {
     $message = $e->getMessage();
@@ -45,157 +43,85 @@ catch (\Exception $e) {
     Http::fail($e->getMessage());
 }
 
-$main  = $decks->main;
-$extra = $decks->extra;
-$side  = $decks->side;
 
+$cache = Config\create_image_cache();
 
+$cell_dimensions  = Config::get('cell');
+$cache_original   = Config::get('cache')['cache_original'];
+$resample_resized = Config::get('images')['resample_resized'];
 
-$x = 25;
-$width = 902;
-$spacing = new Spacing(10, 7);
-
-$tables = [
-    'main' => [
-        'root' => new Vector($x, 60),
-        'spacing' => $spacing,
-        'width' => $width,
-        'height' => 526,
-        'layout' => [
-            'primary' => TableLayout::LEFT_TO_RIGHT,
-            'secondary' => TableLayout::TOP_TO_BOTTOM
-        ],
-        'overlap' => CellOverlap::VERTICAL
-    ],
-    'extra' => [
-        'root' => new Vector($x, 645),
-        'spacing' => $spacing,
-        'width' => $width,
-        'height' => CARD_HEIGHT,
-        'layout' => [
-            'primary' => TableLayout::LEFT_TO_RIGHT,
-            'secondary' => TableLayout::TOP_TO_BOTTOM
-        ],
-        'overlap' => CellOverlap::HORIZONTAL
-    ],
-    'side' => [
-        'root' => new Vector($x, 818),
-        'spacing' => $spacing,
-        'width' => $width,
-        'height' => CARD_HEIGHT,
-        'layout' => [
-            'primary' => TableLayout::LEFT_TO_RIGHT,
-            'secondary' => TableLayout::TOP_TO_BOTTOM
-        ],
-        'overlap' => CellOverlap::HORIZONTAL
-    ]
-];
-
-
-function create_table(string $name): Table
-{
-    $card_size    = new Rectangle(CARD_WIDTH, CARD_HEIGHT);
-    $cell_factory = new CellFactory(
-        $card_size->width(),
-        $card_size->height()
-    );
-
-    global $tables;
-    $c = $tables[$name];
-
-    $table = new Table($c['width'], $c['height'], $cell_factory);
-
-    $table->layout($c['layout']['primary'], $c['layout']['secondary']);
-    $table->overlap($c['overlap']);
-
-    $table->root($c['root']->x(), $c['root']->y());
-    $table->spacing($c['spacing']->horizontal(), $c['spacing']->vertical());
-
-    return $table;
-}
-
-
-
-// $table = new Table(902, 526, $cell_factory);
-
-// $table->layout(TableLayout::LEFT_TO_RIGHT, TableLayout::TOP_TO_BOTTOM);
-// $table->overlap(CellOverlap::VERTICAL);
-
-// $table->root(25, 60);
-// $table->spacing(10, 7);
-
-
-$card_size = new Rectangle(CARD_WIDTH, CARD_HEIGHT);
-
-$table = create_table('main');
-
-
-foreach ($main->cards() as $card)
-    $table->push($card);
-
-
-$cache = Config\get_image_cache();
-
-foreach ($main->unique_card_codes() as $code)
+foreach ($decks->unique_card_codes() as $code)
     $cache->load($code);
 
-if (CACHE_ORIGINAL)
+if ($cache_original)
     $cache->flush();
 
-foreach ($main->unique_card_codes() as $code) {
+foreach ($decks->unique_card_codes() as $code) {
     $entry = $cache->get($code);
     if ($entry === null)
-        Http::fail("an unknown error occured while trying to load a card image");
+        Http::fail("an unexpected error occured whilst loading a card image");
 
     $image = $entry->image();
-    $image->resize($card_size->width(), $card_size->height(), RESAMPLE_CARDS);
+    $image->resize(
+        $cell_dimensions->width(),
+        $cell_dimensions->height(),
+        $resample_resized
+    );
 }
 
-if (!CACHE_ORIGINAL)
+if (!$cache_original)
     $cache->flush();
 
 
-$deck_image = Image::from_file(BACKGROUND_IMAGE);
+$deck_image = Image::from_file(Config::get('images')['background']);
 if ($deck_image === null)
     Http::fail("failed to open deck background", Http::INTERNAL_SERVER_ERROR);
 
-# TODO: put this somewhere else.
+// preserve alpha when working with PNG images.
 if ($deck_image->type() === ImageType::PNG) {
     imagealphablending($deck_image->handle(), false);
     imagesavealpha($deck_image->handle(), true);
 }
 
-foreach ($table->cells() as $cell) {
 
-    $card = $cell->content();
-    $image = $cache->get($card->code)->image();
-    $position = $cell->position();
+$tables = [
+    Config\create_deck_table('main',  $decks->main),
+    Config\create_deck_table('extra', $decks->extra),
+    Config\create_deck_table('side',  $decks->side),
+];
 
-    $dimensions = new Rectangle(
-        $cell->visible_width(),
-        $cell->visible_height()
-    );
+foreach ($tables as $table)
+    foreach ($table->cells() as $cell) {
 
-    $cell_offset = new Vector(
-        $cell->x_offset(),
-        $cell->y_offset()
-    );
+        $card = $cell->content();
+        $image = $cache->get($card->code)->image();
+        $position = $cell->position();
 
-    $deck_image->insert(
-        $image,
-        $position->plus($cell_offset),
-        $cell_offset,
-        $dimensions,
-        $dimensions
-    );
-}
+        $dimensions = new Rectangle(
+            $cell->visible_width(),
+            $cell->visible_height()
+        );
+
+        $cell_offset = new Vector(
+            $cell->x_offset(),
+            $cell->y_offset()
+        );
+
+        $deck_image->insert(
+            $image,
+            $position->plus($cell_offset),
+            $cell_offset,
+            $dimensions,
+            $dimensions
+        );
+    }
 
 
-$image_type = ImageType::from_format(DECK_IMAGE_FORMAT);
-$mime_type  = ImageType::mime_type($image_type);
-$extension  = ImageType::extension($image_type, false);
+$image_type = Config::get('output')['image_type'];
+$filename   = Config::get('output')['content_disposition']['filename'];
 
-$filename = 'deck-list';
+$mime_type = ImageType::mime_type($image_type);
+$extension = ImageType::extension($image_type, false);
 
 header("Content-Type: $mime_type");
 header("Content-Disposition: filename=$filename.$extension");
@@ -203,10 +129,36 @@ header("Content-Disposition: filename=$filename.$extension");
 $deck_image->echo($image_type, false);
 
 
+
 # TODO: make configurable that you can iterate
 #  backwards, so that cards can overlap the other way round
 
+// $cells = (function () use ($tables) {
+//     $cells = [];
+//     foreach ($tables as $table)
+//         foreach ($table->cells() as $cell)
+//             $cells[] = $cell;
+//
+//     foreach(array_reverse($cells) as $cell)
+//         yield $cell;
+// })();
+
 # TODO: try drawing cards in random order
+
+// $cells = (function () use ($tables) {
+//     $cells = [];
+//     foreach ($tables as $table)
+//         foreach ($table->cells() as $cell)
+//             $cells[] = $cell;
+//
+//     while (count($cells) > 0) {
+//         $key = array_rand($cells);
+//         get_logger('i')->info($key);
+//         $cell = $cells[$key];
+//         unset($cells[$key]);
+//         yield $cell;
+//     }
+// })();
 
 # TODO: print numbers with font 'Eurostile Regular'.
 #  https://fonts.adobe.com/fonts/eurostile

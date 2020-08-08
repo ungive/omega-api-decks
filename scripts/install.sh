@@ -10,9 +10,7 @@ php "$script"
 EOF
 }
 
-# note: the glob pattern is relative to the root directory of the project
-
-for script in scripts/*.php; do
+for script in *.php; do
     NAME="${script%.*}"
     FILE="$BIN/$NAME"
     create_script "$script" > $FILE

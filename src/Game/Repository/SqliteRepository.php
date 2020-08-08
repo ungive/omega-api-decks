@@ -10,14 +10,14 @@ class SqliteRepository extends Repository
 {
     private \PDO $db;
 
-    public function __construct(NameMatchOptions $options)
+    public function __construct(string $filename, NameMatchOptions $options)
     {
         parent::__construct($options);
 
-        if (!file_exists(DB_FILE))
+        if (!file_exists($filename))
             throw new \Exception("database does not exist");
 
-        $this->db = new \PDO('sqlite:' . DB_FILE);
+        $this->db = new \PDO("sqlite:$filename");
         $this->db->sqliteCreateFunction('levenshtein', 'levenshtein', 2);
     }
 
@@ -32,6 +32,9 @@ class SqliteRepository extends Repository
             WHERE id = :code
 
         SQL);
+
+        if ($stmt === false)
+            throw new \Exception("failed to prepare select statement");
 
         $stmt->bindValue(':code', $code);
 
@@ -62,6 +65,9 @@ class SqliteRepository extends Repository
             LIMIT 1;
 
         SQL);
+
+        if ($stmt === false)
+            throw new \Exception("failed to prepare select statement");
 
         $sanitized_name = \Db\sanitize_name($name);
         $name_cluster = \Db\name_cluster($sanitized_name);

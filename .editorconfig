@@ -12,3 +12,6 @@ trim_trailing_whitespace = false
 
 [*.{json,yaml,yml}]
 indent_size = 2
+
+[config/config*.php]
+indent_size = 2

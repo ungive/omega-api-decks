@@ -31,7 +31,8 @@ class DecodeStrategyTester implements FormatDecodeStrategy
             }
 
         if ($exception !== null)
-            throw $exception;
+            throw new FormatDecodeException(
+                "could not determine format from input");
 
         return $list;
     }

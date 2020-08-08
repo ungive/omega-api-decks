@@ -39,6 +39,38 @@ class DeckList
         yield $this->side;
     }
 
+    public function cards(): \Generator
+    {
+        foreach ($this->decks() as $deck)
+            foreach ($deck->cards() as $card)
+                yield $card;
+    }
+
+    public function unique_cards(): \Generator
+    {
+        $encountered = [];
+
+        foreach ($this->cards() as $card) {
+            $code = $card->code();
+            if (isset($encountered[$code]))
+                continue;
+            $encountered[$code] = true;
+            yield $card;
+        }
+    }
+
+    public function card_codes(): \Generator
+    {
+        foreach ($this->cards() as $card)
+            yield $card->code();
+    }
+
+    public function unique_card_codes(): \Generator
+    {
+        foreach ($this->unique_cards() as $card)
+            yield $card->code();
+    }
+
     public function validate(bool $allow_too_little = false): void
     {
         foreach ($this->decks() as $deck)

@@ -13,7 +13,7 @@ const FLUSH_FREQUENCY = 128;
 $log = get_logger('cache');
 
 
-$cache = Config\get_image_cache();
+$cache = Config\create_image_cache();
 $cache->loader(function (ImageKey $key, int $type): ?Image {
 
     try {
@@ -26,7 +26,8 @@ $cache->loader(function (ImageKey $key, int $type): ?Image {
 });
 
 
-$db = new \PDO('sqlite:' . DB_FILE);
+// $db = new \PDO('sqlite:' . Config::get('repository')['path']);
+$db = Config\create_repository_pdo();
 
 $cards = $db->query(" SELECT id FROM card ORDER BY CAST(id AS TEXT) ");
 $count = intval($db->query(" SELECT COUNT(id) FROM card ")->fetchColumn());
@@ -38,6 +39,10 @@ $loaded = 0;
 $last_percent = 0.0;
 
 $log->info("loading cards...");
+
+$cell_dimensions  = Config::get('cell');
+$cache_original   = Config::get('cache')['cache_original'];
+$resample_resized = Config::get('images')['resample_resized'];
 
 foreach ($cards as $row) {
     $code = $row['id'];
@@ -54,8 +59,13 @@ foreach ($cards as $row) {
 
     $image = $entry->image();
 
-    if (!CACHE_ORIGINAL) // resize if we're not caching originals
-        $image->resize(CARD_WIDTH, CARD_HEIGHT, RESAMPLE_CARDS);
+    // resize if we're not caching originals
+    if (!$cache_original)
+        $image->resize(
+            $cell_dimensions->width(),
+            $cell_dimensions->height(),
+            $resample_resized
+        );
 
     // flush and clear the buffer frequently so that
     // we don't fill up our memory unnecessarily.

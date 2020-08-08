@@ -33,24 +33,32 @@ COPY composer.lock .
 RUN composer install --prefer-dist --no-dev --no-autoloader \
     && rm -rf $(composer config --global home)
 
+COPY config /var/www/config
 COPY public /var/www/public
 COPY src /var/www/src
 
 RUN composer dump-autoload --no-dev --optimize
 
 
+# TODO: move this upwards
+RUN install-php-extensions \
+        gd \
+    && a2enmod rewrite
+
+
 VOLUME /opt/data
 ENV DATA_DIR /opt/data
+RUN chown www-data /opt/data
 
 COPY scripts /var/www/scripts
 COPY entrypoint.sh /usr/local/bin/
 
-RUN chmod +x scripts/install.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN chmod +x \
+    scripts/install.sh \
+    /usr/local/bin/entrypoint.sh
 
 RUN mkdir -p /opt/bin
 ENV PATH="/opt/bin:${PATH}"
 
-ENTRYPOINT scripts/install.sh /opt/bin && entrypoint.sh
-CMD ["default"]
-# if != default, then execute arguments as if it were a program
+ENTRYPOINT ["entrypoint.sh"]
+CMD []

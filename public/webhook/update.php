@@ -42,7 +42,7 @@ ob_end_flush();
 flush();
 
 
-$update_lock = new FileLock(UPDATE_LOCK_FILE);
+$update_lock = new FileLock(Config::get('repository')['update_lock_file']);
 if ($update_lock->is_locked()) {
     $log->warning("aborting: an update seems to be in progress already");
     exit(1);

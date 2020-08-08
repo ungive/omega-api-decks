@@ -85,7 +85,7 @@ class NameFormatDecodeStrategy implements FormatDecodeStrategy
         // deck card, or null if there are no extra deck cards.
         $card_before_extra_deck = null;
 
-        $move_card2 = function (int $key, array &$src, Deck $dest) {
+        $move_card = function (int $key, array &$src, Deck $dest) {
             if (count($dest) >= $dest::MAX_SIZE)
                 return false;
 
@@ -105,12 +105,12 @@ class NameFormatDecodeStrategy implements FormatDecodeStrategy
             }
 
             // move the cards of this entry to the extra deck.
-            if ($move_card2($key, $cards, $extra_deck))
+            if ($move_card($key, $cards, $extra_deck))
                 continue;
 
             // if not all cards could be added (because the extra deck
             // is full), then add the remaining cards to the side deck.
-            if (!$move_card2($key, $cards, $side_deck))
+            if (!$move_card($key, $cards, $side_deck))
                 throw new FormatDecodeException(implode(" ", [
                     "too many Extra Deck cards, no more than",
                     ExtraDeck::MAX_SIZE + SideDeck::MAX_SIZE,
@@ -140,7 +140,7 @@ class NameFormatDecodeStrategy implements FormatDecodeStrategy
                     continue;
 
                 $found_first = true;
-                $move_card2($key, $cards, $side_deck);
+                $move_card($key, $cards, $side_deck);
             }
         }
         else {
@@ -149,7 +149,7 @@ class NameFormatDecodeStrategy implements FormatDecodeStrategy
             foreach (array_reverse($cards) as $key => $card) {
                 if ($card === $card_before_extra_deck)
                     break; // done
-                if (!$move_card2($key, $cards, $side_deck))
+                if (!$move_card($key, $cards, $side_deck))
                     // there are cards that don't fit into the side deck anymore.
                     // those will be added to the main deck instead, even though
                     // they appeared behind the first extra deck card.
@@ -159,12 +159,12 @@ class NameFormatDecodeStrategy implements FormatDecodeStrategy
 
         // the remaining cards go to the main deck.
         foreach ($cards as $key => $card)
-            if (!$move_card2($key, $cards, $main_deck))
+            if (!$move_card($key, $cards, $main_deck))
                 break;
 
         // if there are still cards remaining, try to put them into the side deck
         foreach($cards as $key => $card)
-            if (!$move_card2($key, $cards, $side_deck))
+            if (!$move_card($key, $cards, $side_deck))
                 throw new FormatDecodeException(implode(" ", [
                     "too many cards, Main and Side Deck have reached their limit"
                 ]));

@@ -9,11 +9,13 @@
       "src/"
     ],
     "files": [
-      "src/scripts/const.php",
+      "src/definitions.php",
+      "src/factory.php",
+      "config/config.php",
+
       "src/scripts/db.php",
       "src/scripts/helpers.php",
-      "src/scripts/log.php",
-      "src/Config.php"
+      "src/scripts/log.php"
     ]
   }
 }

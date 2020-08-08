@@ -7,3 +7,5 @@
 *.sublime-*
 *.cdb
 *.db
+
+/config/config.dev.php
