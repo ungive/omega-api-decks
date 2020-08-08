@@ -13,5 +13,4 @@ set +x
 
 update-database
 
-# httpd -D FOREGROUND
 docker-php-entrypoint apache2-foreground
