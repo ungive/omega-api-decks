@@ -13,6 +13,7 @@ RUN chmod uga+x /usr/local/bin/install-php-extensions && sync
 
 RUN install-php-extensions \
         opcache \
+        gd \
     && a2enmod rewrite
 
 ENV APACHE_DOCUMENT_ROOT /var/www/public
@@ -36,12 +37,6 @@ COPY public /var/www/public
 COPY src /var/www/src
 
 RUN composer dump-autoload --no-dev --optimize
-
-
-# TODO: move this upwards
-RUN install-php-extensions \
-        gd \
-    && a2enmod rewrite
 
 
 ENV DATA_DIR /opt/data
