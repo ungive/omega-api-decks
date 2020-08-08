@@ -5,6 +5,8 @@ namespace Game;
 
 class Deck implements \Countable
 {
+    const TYPE = DeckType::UNKNOWN;
+
     const MIN_SIZE = 0;
     const MAX_SIZE = PHP_INT_MAX;
 
