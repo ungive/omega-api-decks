@@ -179,6 +179,20 @@ class Image
         curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeout_ms);
         $data = curl_exec($ch);
 
+        $content_type = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+        $is_valid_type = $content_type === false;
+
+        if (!$is_valid_type)
+            foreach (explode(';', $content_type) as $part)
+                if (trim($part) === ImageType::mime_type($type)) {
+                    $is_valid_type = true;
+                    break;
+                }
+
+        if (!$is_valid_type)
+            throw new ImageException(
+                "url returned unexpected content: $content_type");
+
         $errno = curl_errno($ch);
         $error = curl_error($ch);
 
