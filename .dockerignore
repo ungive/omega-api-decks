@@ -1,5 +1,6 @@
 .git/
-vendor/
+/vendor/
+/data/
 
 .env
 *.db
