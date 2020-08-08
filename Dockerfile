@@ -48,7 +48,8 @@ RUN install-php-extensions \
 
 VOLUME /opt/data
 ENV DATA_DIR /opt/data
-RUN chown www-data /opt/data
+RUN mkdir -p /opt/data && \
+    chown www-data /opt/data
 
 COPY scripts /var/www/scripts
 COPY entrypoint.sh /usr/local/bin/
