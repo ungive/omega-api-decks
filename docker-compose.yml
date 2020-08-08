@@ -17,5 +17,6 @@ services:
       - ./src:/var/www/src
       - ./config:/var/www/config
       - ./public:/var/www/public
+      - ./scripts:/var/www/scripts
       - ./vendor:/var/www/vendor
       - ./data:/opt/data
