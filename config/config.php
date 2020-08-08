@@ -21,12 +21,13 @@ Config::require_env('DATA_DIR');
 
 Config::set_all([
 
-  'formats' => [
-    YdkeFormatStrategy::class,
-    YdkFormatStrategy::class,
-    OmegaFormatStrategy::class,
-    NameFormatDecodeStrategy::class
-  ],
+  # TODO: make formats configurable
+  // 'formats' => [
+  //   YdkeFormatStrategy::class,
+  //   YdkFormatStrategy::class,
+  //   OmegaFormatStrategy::class,
+  //   NameFormatDecodeStrategy::class
+  // ],
 
   'images' => [
     // the path to the background image for a deck list.
