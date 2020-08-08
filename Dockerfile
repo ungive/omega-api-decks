@@ -11,8 +11,6 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 ADD https://raw.githubusercontent.com/mlocati/docker-php-extension-installer/master/install-php-extensions /usr/local/bin/
 RUN chmod uga+x /usr/local/bin/install-php-extensions && sync
 
-# TODO: remove Imagick
-
 RUN install-php-extensions \
         opcache \
     && a2enmod rewrite
@@ -46,10 +44,10 @@ RUN install-php-extensions \
     && a2enmod rewrite
 
 
-VOLUME /opt/data
 ENV DATA_DIR /opt/data
-RUN mkdir -p /opt/data && \
-    chown www-data /opt/data
+RUN mkdir -p ${DATA_DIR} && \
+    chown www-data ${DATA_DIR}
+VOLUME ${DATA_DIR}
 
 COPY scripts /var/www/scripts
 COPY entrypoint.sh /usr/local/bin/
