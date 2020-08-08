@@ -26,7 +26,7 @@ class YdkFormatStrategy implements FormatEncodeStrategy, FormatDecodeStrategy
             $l = $index + 1;
             $line = trim($line);
 
-            if (count($line) === 0)
+            if (strlen($line) === 0)
                 continue; // ignore empty lines
 
             if (preg_match(self::COMMENT_REGEX, $line, $matches)) {
