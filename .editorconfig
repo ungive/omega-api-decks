@@ -7,8 +7,11 @@ indent_style = space
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.md]
+[*.{md,txt}]
 trim_trailing_whitespace = false
+
+[*.txt]
+insert_final_newline = false
 
 [*.{json,yaml,yml}]
 indent_size = 2
