@@ -1,5 +1,9 @@
 FROM php:7.4-apache
 
+ARG BUILD_DEVELOPMENT
+ENV PHP_ENV=${BUILD_DEVELOPMENT:+development}
+ENV PHP_ENV=${PHP_ENV:-production}
+
 RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         curl \
@@ -20,7 +24,7 @@ ENV APACHE_DOCUMENT_ROOT /var/www/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+RUN mv $PHP_INI_DIR/php.ini-$PHP_ENV $PHP_INI_DIR/php.ini
 
 ENV COMPOSER_ALLOW_SUPERUSER 1
 RUN composer global require hirak/prestissimo --no-plugins --no-scripts
