@@ -2,7 +2,6 @@
 
 namespace Http;
 
-use \Http\ResponseSerializer;
 use \Http\JsonResponseSerializer;
 
 

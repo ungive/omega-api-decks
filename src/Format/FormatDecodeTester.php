@@ -5,24 +5,24 @@ namespace Format;
 use Game\DeckList;
 
 
-class DecodeStrategyTester implements FormatDecodeStrategy
+class FormatDecodeTester implements FormatDecoder
 {
-    private $strategies = [];
+    private $decoders = [];
 
-    function register(FormatDecodeStrategy $strategy): void
+    function register(FormatDecoder $decoder): void
     {
-        $this->strategies[] = $strategy;
+        $this->decoders[] = $decoder;
     }
 
     function decode(string $input): DeckList
     {
-        if (count($this->strategies) === 0)
+        if (count($this->decoders) === 0)
             throw new FormatDecodeException(
-                "cannot decode without any strategies");
+                "cannot decode without any decoders");
 
-        foreach ($this->strategies as $strategy)
+        foreach ($this->decoders as $decoder)
             try {
-                $list = $strategy->decode($input);
+                $list = $decoder->decode($input);
                 $exception = null;
                 break;
             }

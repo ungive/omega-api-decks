@@ -7,7 +7,7 @@ use \Game\DeckList;
 use Game\DeckType;
 
 
-class YdkFormatStrategy implements FormatEncodeStrategy, FormatDecodeStrategy
+class YdkFormatConverter implements FormatConverter
 {
     const COMMENT_REGEX = "/^(?:#|!)\s*(.*)$/";
     const CARD_CODE_REGEX = "/^([0-9]+)$/";

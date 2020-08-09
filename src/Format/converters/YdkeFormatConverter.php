@@ -13,7 +13,7 @@ use function \Utility\ends_with;
 
 # TODO: handle errors better and encapsulate un/pack a little more.
 
-class YdkeFormatStrategy implements FormatEncodeStrategy, FormatDecodeStrategy
+class YdkeFormatConverter implements FormatConverter
 {
     private const PREFIX = "ydke://";
     private const SEPARATOR = "!";

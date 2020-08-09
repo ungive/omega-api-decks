@@ -3,7 +3,6 @@
 namespace Format;
 
 use \Game\Card;
-use \Game\Repository\Repository;
 use \Game\MainDeck;
 use \Game\ExtraDeck;
 use \Game\SideDeck;
@@ -22,15 +21,8 @@ use \Game\DeckList;
 # and then encode in base64
 # and done
 
-class OmegaFormatStrategy implements FormatEncodeStrategy, FormatDecodeStrategy
+class OmegaFormatConverter extends NeedsRepository implements FormatConverter
 {
-    public Repository $repository;
-
-    public function __construct(Repository $repository)
-    {
-        $this->repository = $repository;
-    }
-
     public function encode(DeckList $list): string
     {
         $raw  = "";

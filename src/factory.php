@@ -3,12 +3,12 @@
 namespace Config;
 
 use Config;
-use Format\DecodeStrategyTester;
-use Format\FormatDecodeStrategy;
-use Format\NameFormatDecodeStrategy;
-use Format\OmegaFormatStrategy;
-use Format\YdkeFormatStrategy;
-use Format\YdkFormatStrategy;
+use Format\FormatDecoder;
+use Format\FormatDecodeTester;
+use Format\NameFormatDecoder;
+use Format\OmegaFormatConverter;
+use Format\YdkeFormatConverter;
+use Format\YdkFormatConverter;
 use Game\Deck;
 use Game\Repository\Repository;
 use Game\Repository\SqliteRepository;
@@ -40,16 +40,16 @@ function get_decode_strategies(): array
     // come first, such that we get any error as early as possible.
 
     return [
-        new YdkeFormatStrategy(),
-        new YdkFormatStrategy(),
-        new OmegaFormatStrategy($repository),
-        new NameFormatDecodeStrategy($repository)
+        new YdkFormatConverter(),
+        new YdkeFormatConverter(),
+        new OmegaFormatConverter($repository),
+        new NameFormatDecoder($repository)
     ];
 }
 
-function create_decoder(): FormatDecodeStrategy
+function create_decoder(): FormatDecoder
 {
-    $decoder = new DecodeStrategyTester();
+    $decoder = new FormatDecodeTester();
 
     foreach (get_decode_strategies() as $strategy)
         $decoder->register($strategy);

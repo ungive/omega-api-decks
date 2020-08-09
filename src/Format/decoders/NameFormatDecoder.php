@@ -8,25 +8,17 @@ use Game\DeckType;
 use Game\ExtraDeck;
 use Game\MainDeck;
 use Game\SideDeck;
-use Game\Repository\Repository;
 
 
-class NameFormatDecodeStrategy implements FormatDecodeStrategy
+class NameFormatDecoder extends NeedsRepository implements FormatDecoder
 {
     // needed amount of empty spaces before the side deck
     // in case there are no extra deck cards.
     const SIDE_PRECEDING_EMPTY_LINES = 2;
 
-    private Repository $repository;
-
-    public function __construct(Repository $repository)
-    {
-        $this->repository = $repository;
-    }
-
     public function decode(string $input): DeckList
     {
-        $cards = []; // new CardList();
+        $cards = [];
 
         // a card at index n is the first card of the last consecutive
         // block of cards that is preceded by n lines of whitespace.
