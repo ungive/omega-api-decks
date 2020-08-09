@@ -24,12 +24,10 @@ class DeckList
         case DeckType::MAIN:  return $this->main;
         case DeckType::EXTRA: return $this->extra;
         case DeckType::SIDE:  return $this->side;
-
         case DeckType::UNKNOWN: return null;
         }
 
-        assert(false, "deck type does not exist");
-        return null;
+        throw new \InvalidArgumentException("deck type does not exist");
     }
 
     public function decks(): \Generator
