@@ -1,5 +1,9 @@
 <?php
 
+use Format\NameFormatDecoder;
+use Format\OmegaFormatConverter;
+use Format\YdkeFormatConverter;
+use Format\YdkFormatConverter;
 use Game\Repository\NameMatchOptions;
 use Image\ImageType;
 use Render\CellOverlap;
@@ -7,9 +11,6 @@ use Render\Rectangle;
 use Render\Spacing;
 use Render\TableLayout;
 use Render\Vector;
-
-
-# TODO: disable all HTML warnings and errors
 
 
 if (file_exists(__DIR__ . '/config.dev.php'))
@@ -21,13 +22,22 @@ Config::require_env('DATA_DIR');
 
 Config::set_all([
 
-  # TODO: make formats configurable
-  // 'formats' => [
-  //   YdkeFormatStrategy::class,
-  //   YdkFormatStrategy::class,
-  //   OmegaFormatStrategy::class,
-  //   NameFormatDecodeStrategy::class
-  // ],
+  // the list of supported formats with their respective encoder/decoder.
+  // ordering matters. the most restrictive or most used format shall
+  // come first, such that decoding fails or completes as early as possible.
+  'formats' => [
+    'encoders' => [
+      'ydk' => YdkFormatConverter::class,
+      'ydke' => YdkeFormatConverter::class,
+      'omega' => OmegaFormatConverter::class
+    ],
+    'decoders' => [
+      'ydk' => YdkFormatConverter::class,
+      'ydke' => YdkeFormatConverter::class,
+      'omega' => OmegaFormatConverter::class,
+      'names' => NameFormatDecoder::class
+    ]
+  ],
 
   'images' => [
     // the path to the background image for a deck list.

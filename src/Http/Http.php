@@ -2,6 +2,7 @@
 
 namespace Http;
 
+use Exception;
 use \Http\JsonResponseSerializer;
 
 
@@ -31,6 +32,50 @@ class Http
     public static function allow_method(string $method): void
     {
         self::allow_methods($method);
+    }
+
+    public static function expect_query_parameter_count(int $count): void
+    {
+        assert($count >= 0, "query parameter count cannot be less than 0");
+
+        if (count($_GET) === $count)
+            return;
+
+        self::fail("too many query parameters, $count expected", self::BAD_REQUEST);
+    }
+
+    public static function allow_query_parameters(string ...$names): void
+    {
+        $allowed = [];
+        foreach ($names as $name)
+            $allowed[$name] = true;
+
+        $disallowed_name = null;
+
+        foreach (array_keys($_GET) as $name)
+            if (!isset($allowed[$name])) {
+                $disallowed_name = $name;
+                break;
+            }
+
+        if ($disallowed_name === null)
+            return;
+
+        self::fail("unrecognized query parameter '$disallowed_name'", self::BAD_REQUEST);
+    }
+
+    public static function get_query_parameter_names(): \Generator
+    {
+        foreach (array_keys($_GET) as $name)
+            yield $name;
+    }
+
+    public static function get_first_query_parameter_name(): string
+    {
+        if (($name = self::get_query_parameter_names()->current()) !== null)
+            return $name;
+
+        throw new \Exception("there are no query parameters");
     }
 
     public static function get_query_parameter(string $name,
@@ -64,7 +109,7 @@ class Http
         self::header('Content-Type', $content_type);
 
         echo $serializer->serialize($response);
-        Http::close($response->code);
+        self::close($response->code);
     }
 
     public static function fail(string $message,

@@ -5,10 +5,7 @@ namespace Config;
 use Config;
 use Format\FormatDecoder;
 use Format\FormatDecodeTester;
-use Format\NameFormatDecoder;
-use Format\OmegaFormatConverter;
-use Format\YdkeFormatConverter;
-use Format\YdkFormatConverter;
+use Format\NeedsRepository;
 use Game\Deck;
 use Game\Repository\Repository;
 use Game\Repository\SqliteRepository;
@@ -20,10 +17,25 @@ use Render\CellFactory;
 use Render\Table;
 
 
-function create_repository(): Repository
+abstract class CardRepository extends Repository
 {
-    $R = \Config::get('repository');
-    return new SqliteRepository($R['path'], $R['options']);
+    private static ?Repository $instance = null;
+
+    public static function get(): Repository
+    {
+        if (self::$instance === null) {
+            $R = Config::get('repository');
+            self::$instance = new SqliteRepository($R['path'], $R['options']);
+        }
+
+        return self::$instance;
+    }
+}
+
+
+function get_repository(): Repository
+{
+    return CardRepository::get();
 }
 
 function create_repository_pdo(): \PDO
@@ -32,29 +44,53 @@ function create_repository_pdo(): \PDO
     return new \PDO("sqlite:$path");
 }
 
-function get_decode_strategies(): array
+
+function create_decoder_from_class(string $class): FormatDecoder
 {
-    $repository = create_repository();
+    if (!is_subclass_of($class, FormatDecoder::class))
+        throw new \Exception("$class is not a subclass of " . FormatDecoder::class);
 
-    // the ordering here matters. most restrictive format should
-    // come first, such that we get any error as early as possible.
+    $args = [];
+    if (is_subclass_of($class, NeedsRepository::class))
+        $args[] = get_repository();
 
-    return [
-        new YdkFormatConverter(),
-        new YdkeFormatConverter(),
-        new OmegaFormatConverter($repository),
-        new NameFormatDecoder($repository)
-    ];
+    return new $class(...$args);
 }
 
-function create_decoder(): FormatDecoder
+function create_decoder(string $format_name): FormatDecoder
 {
-    $decoder = new FormatDecodeTester();
+    $D = Config::get('formats')['decoders'];
+    if (!isset($D[$format_name]))
+        throw new \Exception("no decoder exists for format '$format_name'");
 
-    foreach (get_decode_strategies() as $strategy)
-        $decoder->register($strategy);
+    $class = $D[$format_name];
+    return create_decoder_from_class($class);
+}
 
-    return $decoder;
+function create_decoders(string ...$format_names): \Generator
+{
+    foreach ($format_names as $format_name)
+        yield create_decoder($format_name);
+}
+
+function create_all_decoders(): \Generator
+{
+    foreach (Config::get('formats')['decoders'] as $class)
+        yield create_decoder_from_class($class);
+}
+
+function create_decode_tester(string ...$format_names): FormatDecodeTester
+{
+    $tester = new FormatDecodeTester();
+
+    $decoders = count($format_names) > 0
+        ? create_decoders(...$format_names)
+        : create_all_decoders();
+
+    foreach ($decoders as $decoder)
+        $tester->register($decoder);
+
+    return $tester;
 }
 
 function get_image_url(ImageKey $key): string
