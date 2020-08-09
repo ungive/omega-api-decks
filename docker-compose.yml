@@ -11,7 +11,10 @@ services:
       - php-data:/opt/data
 
   development:
-    build: .
+    build:
+      context: .
+      args:
+        BUILD_DEVELOPMENT: 1
     ports:
       - 8800:80
     env_file: .env.dev
