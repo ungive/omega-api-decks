@@ -7,6 +7,8 @@ services:
     ports:
       - ${PORT}:80
     env_file: .env
+    volumes:
+      - php-data:/opt/data
 
   development:
     build: .
@@ -20,3 +22,6 @@ services:
       - ./scripts:/var/www/scripts
       - ./vendor:/var/www/vendor
       - ./data:/opt/data
+
+volumes:
+  php-data:
