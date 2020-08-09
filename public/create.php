@@ -13,10 +13,10 @@ use Render\Vector;
 
 $log = get_logger('create');
 
-// disable warnings because the omega deck code can emit
-// HTML that messes up any image that we try to transmit.
-# TODO: you can probably disable HTML errors in the config
-error_reporting(error_reporting() & ~E_WARNING);
+// disable warnings when errors are displayed because the omega deck code
+// can emit a gzip warning that messes up any image that we try to transmit.
+if (ini_get("display_errors") === '1')
+    error_reporting(E_ALL & ~E_WARNING);
 
 
 Http::allow_method('GET');
