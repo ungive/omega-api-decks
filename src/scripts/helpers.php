@@ -26,11 +26,22 @@ function unpack_inc(string $format, string &$data)
     return $unpacked;
 }
 
-// function set_response_code(int $code)
-// {
-//     http_response_code($code);
-//     die;
-// }
+# idea by Jeremy Ruten on Stack Overflow:
+# https://stackoverflow.com/a/263621/6748004
+function array_depth(array $array): int
+{
+    $max_indentation = 1;
+
+    $array = print_r($array, true);
+    $lines = explode(PHP_EOL, $array);
+
+    foreach ($lines as $line) {
+        $indentation = (strlen($line) - strlen(ltrim($line))) / 4;
+        $max_indentation = max($max_indentation, $indentation);
+    }
+
+    return intval(ceil(($max_indentation - 1) / 2) + 1);
+}
 
 function temp_filename(): string
 {
