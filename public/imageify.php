@@ -150,6 +150,11 @@ $deck_image->echo($image_type, false);
 
 
 
+# TODO: cache generated images for a certain amount of time.
+#  good opportunity to learn Redis e.g.
+
+
+
 # TODO: make configurable that you can iterate
 #  backwards, so that cards can overlap the other way round
 
