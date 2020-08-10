@@ -1,14 +1,8 @@
 <?php
 
-// disable warnings when errors are displayed because the omega deck code
-// can emit a gzip warning that messes up any image that we try to transmit.
-if (ini_get("display_errors") === '1')
-    error_reporting(E_ALL & ~E_WARNING);
-
-
 require(__DIR__ . '/../vendor/autoload.php');
+require(__DIR__ . '/_base.php');
 
-use Format\FormatDecodeException;
 use Http\Http;
 use Image\Image;
 use Image\ImageType;
@@ -16,52 +10,9 @@ use Render\Rectangle;
 use Render\Vector;
 
 
-const QUERY_ALL_FORMATS = 'list';
-
-
-$decoders = Config::get('formats')['decoders'];
-$format_names = array_keys($decoders);
-
-assert(!in_array(QUERY_ALL_FORMATS, $format_names),
-    "query parameter name for all formats is a format itself");
-
-
 Http::allow_method('GET');
-Http::allow_query_parameters('list', ...$format_names);
-Http::expect_query_parameter_count(1);
 
-$format = Http::get_first_query_parameter_name();
-$input  = Http::get_query_parameter($format);
-
-try {
-    $decoder = $format === QUERY_ALL_FORMATS
-        ? Config\create_decode_tester()
-        : Config\create_decoder($format);
-}
-catch (Exception $e) {
-    $message = $e->getMessage();
-    Http::fail("an error occured while handling your request: $message");
-}
-
-
-try {
-    $decks = $decoder->decode($input);
-}
-catch (FormatDecodeException $e) {
-    $message = $e->getMessage();
-    Http::fail("failed to decode: $message", Http::BAD_REQUEST);
-}
-catch (Exception $e) {
-    $message = $e->getMessage();
-    Http::fail("an error occured while handling your request: $message");
-}
-
-try {
-    $decks->validate(true);
-}
-catch (\Exception $e) {
-    Http::fail($e->getMessage());
-}
+$decks = Base\decode_query_deck();
 
 
 $cache = Config\create_image_cache();
