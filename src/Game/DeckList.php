@@ -34,18 +34,7 @@ class DeckList extends \Json\Serializable
 
     public function decks(): \Generator
     {
-        $reflection = new \ReflectionClass(self::class);
-        $properties = $reflection->getProperties();
-
-        foreach ($properties as $property) {
-            if (($type = $property->getType()) === null)
-                continue;
-
-            $name  = $property->getName();
-            $class = $type->getName();
-            if ($class === Deck::class || is_subclass_of($class, Deck::class))
-                yield $name => $this->$name;
-        }
+        return $this->reflect_decks();
     }
 
     public function cards(): \Generator
