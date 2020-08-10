@@ -2,8 +2,10 @@
 
 namespace Game;
 
+use Json\JsonDeserializeException;
 
-class DeckList
+
+class DeckList extends \Json\Serializable
 {
     const DECK_COUNT = 3;
 
@@ -32,9 +34,18 @@ class DeckList
 
     public function decks(): \Generator
     {
-        yield $this->main;
-        yield $this->extra;
-        yield $this->side;
+        $reflection = new \ReflectionClass(self::class);
+        $properties = $reflection->getProperties();
+
+        foreach ($properties as $property) {
+            if (($type = $property->getType()) === null)
+                continue;
+
+            $name  = $property->getName();
+            $class = $type->getName();
+            if ($class === Deck::class || is_subclass_of($class, Deck::class))
+                yield $name => $this->$name;
+        }
     }
 
     public function cards(): \Generator
@@ -73,5 +84,47 @@ class DeckList
     {
         foreach ($this->decks() as $deck)
             $deck->validate($allow_too_little);
+    }
+
+    protected function json_serialize()
+    {
+        $decks = [];
+
+        foreach ($this->reflect_decks() as $name => $deck)
+            $decks[$name] = iterator_to_array($deck->card_codes());
+
+        return [ 'decks' => $decks ];
+    }
+
+    protected static function json_deserialize($o): self
+    {
+        $list  = new DeckList();
+        $decks = $o['decks'];
+
+        foreach ($list->reflect_decks() as $name => $deck) {
+            if (!isset($decks[$name]))
+                throw new JsonDeserializeException("deck '$name' does not exist");
+
+            foreach ($decks[$name] as $code)
+                $deck->add(new Card($code));
+        }
+
+        return $list;
+    }
+
+    private function reflect_decks(): \Generator
+    {
+        $reflection = new \ReflectionClass(self::class);
+        $properties = $reflection->getProperties();
+
+        foreach ($properties as $property) {
+            if (($type = $property->getType()) === null)
+                continue;
+
+            $name  = $property->getName();
+            $class = $type->getName();
+            if ($class === Deck::class || is_subclass_of($class, Deck::class))
+                yield $name => $this->$name;
+        }
     }
 }

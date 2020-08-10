@@ -164,7 +164,6 @@ class Deck implements \Countable
         return trim(preg_replace("/([A-Z])/", ' $1', $name));
     }
 
-
     private function add_count(int $diff): void
     {
         $this->count += $diff;
