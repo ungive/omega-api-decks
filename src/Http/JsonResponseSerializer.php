@@ -23,7 +23,7 @@ class JsonResponseSerializer implements ResponseSerializer
                 $ordered[$property->name] = $response->$name;
             }
 
-        return json_encode($ordered, JSON_PRETTY_PRINT);
+        return json_encode($ordered); # JSON_PRETTY_PRINT
     }
 
     public function content_type(): string
