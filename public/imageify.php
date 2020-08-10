@@ -1,7 +1,7 @@
 <?php
 
 require(__DIR__ . '/../vendor/autoload.php');
-require(__DIR__ . '/_base.php');
+require(__DIR__ . '/common/format.php');
 
 use Http\Http;
 use Image\Image;
