@@ -7,10 +7,11 @@ indent_style = space
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.{md,txt}]
+[*.md]
 trim_trailing_whitespace = false
 
-[*.txt]
+[examples/**/*.*]
+trim_trailing_whitespace = false
 insert_final_newline = false
 
 [*.{json,yaml,yml}]
