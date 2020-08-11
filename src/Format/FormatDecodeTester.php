@@ -9,10 +9,13 @@ class FormatDecodeTester implements FormatDecoder
 {
     private $decoders = [];
 
-    function register(FormatDecoder $decoder): void
+    function register(string $name, FormatDecoder $decoder): void
     {
-        $this->decoders[] = $decoder;
+        $this->decoders[$name] = $decoder;
     }
+
+    # TODO: put effort in something better than this...
+    private ?string $last_format_name = null;
 
     function decode(string $input): DeckList
     {
@@ -20,9 +23,10 @@ class FormatDecodeTester implements FormatDecoder
             throw new FormatDecodeException(
                 "cannot decode without any decoders");
 
-        foreach ($this->decoders as $decoder)
+        foreach ($this->decoders as $name => $decoder)
             try {
                 $list = $decoder->decode($input);
+                $this->last_format_name = $name;
                 $exception = null;
                 break;
             }
@@ -36,4 +40,6 @@ class FormatDecodeTester implements FormatDecoder
 
         return $list;
     }
+
+    function last_format_name(): ?string { return $this->last_format_name; }
 }

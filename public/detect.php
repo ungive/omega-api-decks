@@ -10,6 +10,4 @@ Http::allow_method('GET');
 $decks    = Base\decode_query_deck($input_format);
 $response = Base\create_json_response($input_format);
 
-$response->data('decks', $decks);
-
 Http::send($response);

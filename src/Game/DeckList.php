@@ -75,20 +75,19 @@ class DeckList extends \Json\Serializable
             $deck->validate($allow_too_little);
     }
 
-    protected function json_serialize()
+    public function json_serialize()
     {
         $decks = [];
 
         foreach ($this->reflect_decks() as $name => $deck)
             $decks[$name] = iterator_to_array($deck->card_codes());
 
-        return [ 'decks' => $decks ];
+        return $decks;
     }
 
-    protected static function json_deserialize($o): self
+    public static function json_deserialize($decks): self
     {
         $list  = new DeckList();
-        $decks = $o['decks'];
 
         foreach ($list->reflect_decks() as $name => $deck) {
             if (!isset($decks[$name]))

@@ -10,34 +10,8 @@ use \Game\DeckType;
 use \Game\DeckList;
 
 
-# -*- Omega Code -*-
-#
-# so basically you make a byte array,
-# first byte is the main deck count (main+extra deck)
-# then 2nd byte is the side deck count
-# then 4 bytes for each id (again main and extra deck)
-# then the side deck ids again 4 bytes each
-# then you need to compress that byte array
-# and then encode in base64
-# and done
-
-class OmegaFormatConverter extends NeedsRepository implements FormatConverter
+class OmegaFormatDecoder extends NeedsRepository implements FormatDecoder
 {
-    public function encode(DeckList $list): string
-    {
-        $raw  = "";
-        $raw .= pack('C', count($list->main) + count($list->extra));
-        $raw .= pack('C', count($list->side));
-        $raw .= pack('V*', ...$list->main->card_codes());
-        $raw .= pack('V*', ...$list->extra->card_codes());
-        $raw .= pack('V*', ...$list->side->card_codes());
-
-        $deflated = gzdeflate($raw);
-        $encoded = base64_encode($deflated);
-
-        return $encoded;
-    }
-
     public function decode(string $encoded): DeckList
     {
         $encoded = trim($encoded);

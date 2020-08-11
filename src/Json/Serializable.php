@@ -10,7 +10,7 @@ abstract class Serializable implements \JsonSerializable
     * be passed as a value to the json_encode() function
     * @return mixed the value that is to be serialized
     */
-    protected abstract function json_serialize();
+    public abstract function json_serialize();
 
     /**
     * Deserializes the given output from json_decode() and converts
@@ -18,7 +18,7 @@ abstract class Serializable implements \JsonSerializable
     * @param mixed $value the result of json_decode()
     * @return mixed an instance of the implementing class
     */
-    protected abstract static function json_deserialize($value);
+    public abstract static function json_deserialize($value);
 
     public function jsonSerialize()
     {

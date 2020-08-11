@@ -70,13 +70,13 @@ function create_decoder(string $format_name): FormatDecoder
 function create_decoders(string ...$format_names): \Generator
 {
     foreach ($format_names as $format_name)
-        yield create_decoder($format_name);
+        yield $format_name => create_decoder($format_name);
 }
 
 function create_all_decoders(): \Generator
 {
-    foreach (Config::get('formats')['decoders'] as $class)
-        yield create_decoder_from_class($class);
+    foreach (Config::get('formats')['decoders'] as $format_name => $class)
+        yield $format_name => create_decoder_from_class($class);
 }
 
 function create_decode_tester(string ...$format_names): FormatDecodeTester
@@ -87,8 +87,8 @@ function create_decode_tester(string ...$format_names): FormatDecodeTester
         ? create_decoders(...$format_names)
         : create_all_decoders();
 
-    foreach ($decoders as $decoder)
-        $tester->register($decoder);
+    foreach ($decoders as $format_name => $decoder)
+        $tester->register($format_name, $decoder);
 
     return $tester;
 }

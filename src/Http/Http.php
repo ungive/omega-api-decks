@@ -1,9 +1,8 @@
 <?php
 
-namespace Http;
-
-use Exception;
-use \Http\JsonResponseSerializer;
+use Http\JsonErrorResponse;
+use Http\JsonResponse;
+use Json\Json;
 
 
 class Http
@@ -15,9 +14,6 @@ class Http
     const METHOD_NOT_ALLOWED = 405;
 
     const INTERNAL_SERVER_ERROR = 500;
-
-    private static string $response_serializer_type
-        = JsonResponseSerializer::class;
 
     public static function allow_methods(string ...$methods): void
     {
@@ -34,52 +30,51 @@ class Http
         self::allow_methods($method);
     }
 
-    public static function expect_query_parameter_count(int $count): void
-    {
-        assert($count >= 0, "query parameter count cannot be less than 0");
+    // public static function expect_query_parameter_count(int $count): void
+    // {
+    //     assert($count >= 0, "query parameter count cannot be less than 0");
 
-        if (count($_GET) === $count)
-            return;
+    //     if (count($_GET) === $count)
+    //         return;
 
-        self::fail("too many query parameters, $count expected", self::BAD_REQUEST);
-    }
+    //     self::fail("too many query parameters, $count expected", self::BAD_REQUEST);
+    // }
 
-    public static function allow_query_parameters(string ...$names): void
-    {
-        $allowed = [];
-        foreach ($names as $name)
-            $allowed[$name] = true;
+    // public static function allow_query_parameters(string ...$names): void
+    // {
+    //     $allowed = [];
+    //     foreach ($names as $name)
+    //         $allowed[$name] = true;
 
-        $disallowed_name = null;
+    //     $disallowed_name = null;
 
-        foreach (array_keys($_GET) as $name)
-            if (!isset($allowed[$name])) {
-                $disallowed_name = $name;
-                break;
-            }
+    //     foreach (array_keys($_GET) as $name)
+    //         if (!isset($allowed[$name])) {
+    //             $disallowed_name = $name;
+    //             break;
+    //         }
 
-        if ($disallowed_name === null)
-            return;
+    //     if ($disallowed_name === null)
+    //         return;
 
-        self::fail("unrecognized query parameter '$disallowed_name'", self::BAD_REQUEST);
-    }
+    //     self::fail("unrecognized query parameter '$disallowed_name'", self::BAD_REQUEST);
+    // }
 
-    public static function get_query_parameter_names(): \Generator
-    {
-        foreach (array_keys($_GET) as $name)
-            yield $name;
-    }
+    // public static function get_query_parameter_names(): \Generator
+    // {
+    //     foreach (array_keys($_GET) as $name)
+    //         yield $name;
+    // }
 
-    public static function get_first_query_parameter_name(): string
-    {
-        if (($name = self::get_query_parameter_names()->current()) !== null)
-            return $name;
+    // public static function get_first_query_parameter_name(): string
+    // {
+    //     if (($name = self::get_query_parameter_names()->current()) !== null)
+    //         return $name;
 
-        throw new \Exception("there are no query parameters");
-    }
+    //     throw new \Exception("there are no query parameters");
+    // }
 
-    public static function get_query_parameter(string $name,
-                                               bool $required = true): ?string
+    public static function get_query_parameter(string $name, bool $required = true): ?string
     {
         if (!isset($_GET[$name])) {
             if (!$required) return null;
@@ -102,23 +97,20 @@ class Http
         header("$name: $value", $replace, $http_response_code);
     }
 
-    public static function set_response(Response $response): void
+    public static function send(JsonResponse $response, int $code = self::OK): void
     {
-        $serializer = new self::$response_serializer_type();
-        $content_type = $serializer->content_type();
-        self::header('Content-Type', $content_type);
+        if ($response instanceof JsonErrorResponse)
+            get_logger('http')->alert("failed with: " . $response->get_error());
 
-        echo $serializer->serialize($response);
-        self::close($response->code);
+        self::header('Content-Type', $response::mime_type());
+        echo $response->to_json();
+        self::close($code);
     }
 
     public static function fail(string $message,
                                 int $code = self::INTERNAL_SERVER_ERROR): void
     {
-        get_logger('http')->alert("failed with: $message");
-
-        $response = new ErrorResponse($code, $message);
-        self::set_response($response);
+        self::send(new JsonErrorResponse($message), $code);
     }
 
     public static function close(?int $code = null)

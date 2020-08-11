@@ -5,38 +5,40 @@ namespace Base;
 require_once(__DIR__ . '/_base.php');
 
 use Config;
+use Http;
+
 use Format\FormatDecodeException;
 use Format\FormatDecoder;
+use Format\FormatDecodeTester;
 use Game\DeckList;
-use Http\Http;
 
 
-const QUERY_ALL_FORMATS = 'list';
+const QUERY_ALL_DECODE_FORMATS = 'list';
 
 
-function get_supported_formats(): array
+function get_supported_decode_formats(): array
 {
     $decoders = Config::get('formats')['decoders'];
     $formats  = array_keys($decoders);
 
-    assert(!in_array(QUERY_ALL_FORMATS, $formats),
-        "query parameter name for all formats is a format itself");
+    assert(!in_array(QUERY_ALL_DECODE_FORMATS, $formats),
+        "query parameter name for all decode formats is a format itself");
 
     return $formats;
 }
 
-function get_query_format(): string
+function get_query_decode_format(): string
 {
-    if (isset($_GET[QUERY_ALL_FORMATS]))
-        return QUERY_ALL_FORMATS;
+    if (isset($_GET[QUERY_ALL_DECODE_FORMATS]))
+        return QUERY_ALL_DECODE_FORMATS;
 
-    $formats = get_supported_formats();
+    $formats = get_supported_decode_formats();
 
     foreach ($formats as $format)
         if (isset($_GET[$format]))
             return $format;
 
-    $valid_formats = array_merge([ QUERY_ALL_FORMATS ], $formats);
+    $valid_formats = array_merge([ QUERY_ALL_DECODE_FORMATS ], $formats);
     $valid_formats = implode(', ', $valid_formats);
 
     Http::fail(
@@ -47,24 +49,28 @@ function get_query_format(): string
 
 function get_query_encoded_deck(string &$format = null): string
 {
-    $format = get_query_format();
+    $format = get_query_decode_format();
     return $_GET[$format];
 }
 
 function create_format_decoder(string $format): FormatDecoder
 {
-    return $format === QUERY_ALL_FORMATS
+    return $format === QUERY_ALL_DECODE_FORMATS
         ? Config\create_decode_tester()
         : Config\create_decoder($format);
 }
 
-function decode_query_deck(): DeckList
+function decode_query_deck(?string &$format = null): DeckList
 {
     $input = get_query_encoded_deck($format);
 
     try {
         $decoder = create_format_decoder($format);
         $decks   = $decoder->decode($input);
+
+        # TODO: put effort in something better than this...
+        if ($decoder instanceof FormatDecodeTester)
+            $format = $decoder->last_format_name();
     }
     catch (FormatDecodeException $e) {
         $message = $e->getMessage();

@@ -1,9 +1,5 @@
 <?php
 
-use Format\NameFormatDecoder;
-use Format\OmegaFormatConverter;
-use Format\YdkeFormatConverter;
-use Format\YdkFormatConverter;
 use Game\Repository\NameMatchOptions;
 use Image\ImageType;
 use Render\CellOverlap;
@@ -27,15 +23,16 @@ Config::set_all([
   // come first, such that decoding fails or completes as early as possible.
   'formats' => [
     'encoders' => [
-      'ydk' => YdkFormatConverter::class,
-      'ydke' => YdkeFormatConverter::class,
-      'omega' => OmegaFormatConverter::class
+      Format::OMEGA => Format\OmegaFormatEncoder::class,
+      Format::YDKE => Format\YdkeFormatEncoder::class,
+      Format::YDK => Format\YdkFormatEncoder::class
     ],
     'decoders' => [
-      'ydk' => YdkFormatConverter::class,
-      'ydke' => YdkeFormatConverter::class,
-      'omega' => OmegaFormatConverter::class,
-      'names' => NameFormatDecoder::class
+      Format::YDK => Format\YdkFormatDecoder::class,
+      Format::YDKE => Format\YdkeFormatDecoder::class,
+      Format::OMEGA => Format\OmegaFormatDecoder::class,
+      Format::NAMES => Format\NameFormatDecoder::class,
+      Format::JSON => Format\JsonFormatDecoder::class
     ]
   ],
 

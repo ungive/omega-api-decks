@@ -3,7 +3,6 @@
 require(__DIR__ . '/../vendor/autoload.php');
 require(__DIR__ . '/common/format.php');
 
-use Http\Http;
 use Image\Image;
 use Image\ImageType;
 use Render\Rectangle;

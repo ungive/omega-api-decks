@@ -3,20 +3,12 @@
 namespace Format;
 
 use Game\Card;
-use \Game\DeckList;
+use Game\DeckList;
 use Game\DeckType;
 
 
-class YdkFormatConverter implements FormatConverter
+class YdkFormatDecoder implements FormatDecoder
 {
-    const COMMENT_REGEX = "/^(?:#|!)\s*(.*)$/";
-    const CARD_CODE_REGEX = "/^([0-9]+)$/";
-
-    public function encode(DeckList $list): string
-    {
-        throw new FormatException("not implemented");
-    }
-
     public function decode(string $encoded): DeckList
     {
         $deck_list = new DeckList();
@@ -29,7 +21,7 @@ class YdkFormatConverter implements FormatConverter
             if (strlen($line) === 0)
                 continue; // ignore empty lines
 
-            if (preg_match(self::COMMENT_REGEX, $line, $matches)) {
+            if (preg_match(YdkFormat::COMMENT_REGEX, $line, $matches)) {
                 switch ($content = strtolower($matches[1])) {
                 case 'main': case 'extra': case 'side':
                     $deck = $deck_list->$content; // current deck
@@ -37,7 +29,7 @@ class YdkFormatConverter implements FormatConverter
                 continue;
             }
 
-            if (preg_match(self::CARD_CODE_REGEX, $line, $matches)) {
+            if (preg_match(YdkFormat::CARD_CODE_REGEX, $line, $matches)) {
                 $code = intval($matches[1]);
                 if ($deck === null)
                     throw new FormatDecodeException(
