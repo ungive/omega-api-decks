@@ -5,7 +5,7 @@ namespace Game;
 use Json\JsonDeserializeException;
 
 
-class DeckList extends \Json\Serializable
+class DeckList extends \Json\Serializable implements \Countable
 {
     const DECK_COUNT = 3;
 
@@ -67,6 +67,14 @@ class DeckList extends \Json\Serializable
     {
         foreach ($this->unique_cards() as $card)
             yield $card->code();
+    }
+
+    public function count()
+    {
+        $sum = 0;
+        foreach ($this->decks() as $deck)
+            $sum += count($deck);
+        return $sum;
     }
 
     public function validate(bool $allow_too_little = false): void
