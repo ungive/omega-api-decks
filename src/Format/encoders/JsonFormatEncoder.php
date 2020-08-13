@@ -2,7 +2,6 @@
 
 namespace Format;
 
-use Game\Deck;
 use Game\DeckList;
 
 
