@@ -136,17 +136,31 @@ class NameFormatDecoder extends NeedsRepository implements FormatDecoder
             }
         }
         else {
+            // we're iterating in reverse, so we can't immediately add
+            // side deck cards. store them and reverse them again.
+            $side_count = count($side_deck);
+            $side_keys = [];
+
             // the cards from the end of the list until the position at which
             // the first extra deck card was encountered belong to the side deck.
-            foreach (array_reverse($cards) as $key => $card) {
+            foreach (array_reverse($cards, true) as $key => $card) {
                 if ($card === $card_before_extra_deck)
                     break; // done
-                if (!$move_card($key, $cards, $side_deck))
-                    // there are cards that don't fit into the side deck anymore.
-                    // those will be added to the main deck instead, even though
-                    // they appeared behind the first extra deck card.
-                    break;
+                if ($side_count < $side_deck::MAX_SIZE) {
+                    $side_keys[] = $key;
+                    $side_count ++;
+                    continue;
+                }
+                // there are cards that don't fit into the side deck anymore.
+                // those will be added to the main deck instead, even though
+                // they appeared behind the first extra deck card.
+                break;
             }
+
+            foreach (array_reverse($side_keys) as $key)
+                if (!$move_card($key, $cards, $side_deck))
+                    throw new FormatDecodeException(
+                        "this shouldn't happen, please file an issue");
         }
 
         // the remaining cards go to the main deck.
