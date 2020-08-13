@@ -16,9 +16,19 @@ class NameFormatDecoder extends NeedsRepository implements FormatDecoder
     // in case there are no extra deck cards.
     const SIDE_PRECEDING_EMPTY_LINES = 2;
 
+    const LINE_CARD_REGEX = "/\\s*(\\d+)x?\\s\\s*(.+)\\s*/";
+
     public function decode(string $input): DeckList
     {
+        $deck_list = new DeckList();
+        $current_deck = null;
+
         $cards = [];
+
+        $deck_names = [];
+        foreach (array_keys(iterator_to_array($deck_list->decks())) as $name)
+            $deck_names[] = strtolower($name);
+        $deck_names = implode('|', $deck_names);
 
         // a card at index n is the first card of the last consecutive
         // block of cards that is preceded by n lines of whitespace.
@@ -40,14 +50,28 @@ class NameFormatDecoder extends NeedsRepository implements FormatDecoder
             }
 
             $matches = [];
-            $result = preg_match("/\\s*(\\d+)x?\\s\\s*(.+)\\s*/", $entry, $matches);
+            $result = preg_match(self::LINE_CARD_REGEX, $entry, $matches);
 
-            if ($result === 0 || $result === false)
-                throw new FormatDecodeException(
-                    "unable to parse line $line of input");
+            if (!$result) {
+                $result = preg_match("/($deck_names)/", strtolower($entry), $matches);
+                if (!$result)
+                    throw new FormatDecodeException(
+                        "unable to parse line $line of input");
+
+                $deck_name = $matches[1];
+                $current_deck = $deck_list->$deck_name;
+                continue;
+            }
 
             $card_count = intval($matches[1]);
             $card_name = $matches[2];
+
+            $card = $this->repository->get_card_by_name($card_name);
+
+            if ($current_deck != null) {
+                $current_deck->add($card, $card_count);
+                continue;
+            }
 
             // before we save the "first side card", we need to make sure
             // that up until this point the main deck has enough cards,
@@ -55,7 +79,6 @@ class NameFormatDecoder extends NeedsRepository implements FormatDecoder
             // remaining cards into the side deck.
             $main_deck_satisfied = count($cards) >= MainDeck::MIN_SIZE;
 
-            $card = $this->repository->get_card_by_name($card_name);
             for ($i = 0; $i < $card_count; $i++)
                 $cards[] = $card;
 
@@ -67,7 +90,9 @@ class NameFormatDecoder extends NeedsRepository implements FormatDecoder
             }
         }
 
-        $deck_list = new DeckList();
+        if ($current_deck !== null && count($cards) > 0)
+            throw new FormatDecodeException(
+                "could not associate one or more cards with a deck");
 
         $extra_deck = $deck_list->extra;
         $side_deck  = $deck_list->side;
@@ -171,9 +196,8 @@ class NameFormatDecoder extends NeedsRepository implements FormatDecoder
         // if there are still cards remaining, try to put them into the side deck
         foreach($cards as $key => $card)
             if (!$move_card($key, $cards, $side_deck))
-                throw new FormatDecodeException(implode(" ", [
-                    "too many cards, Main and Side Deck have reached their limit"
-                ]));
+                throw new FormatDecodeException(
+                    "too many cards, Main and Side Deck have reached their limit");
 
         return $deck_list;
     }
