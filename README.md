@@ -20,6 +20,15 @@ It can also be used to simply detect the format of your input.
 |[**`List of card names`**](examples/formats/names.txt)|`names`|
 |[**`JSON object`**](examples/formats/json.json)|`json`|
 
+Cards in the list of names are associated with a deck by the following rules:
+
+- The first 40 non-Extra Deck cards go to the Main Deck
+- The first 15 Extra Deck cards go to the Extra Deck
+- Up to 60 cards before the first Extra Deck card go to the Main Deck
+- The remaining cards are put into the Side Deck
+
+Alternatively, one can describe where cards belong by putting a line in front of them that contains the name of the respective deck (`main`, `side` or `extra`, case-insensitive), similar to how it works with the [`YDK`](examples/formats/ydk.txt) format.
+
 ### common query parameters
 
 All endpoints have the following set of query parameters in common:  
