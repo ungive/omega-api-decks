@@ -2,7 +2,8 @@
 
 namespace Utility;
 
-use Http\Http;
+use Http;
+
 
 function starts_with($haystack, $needle)
 {
