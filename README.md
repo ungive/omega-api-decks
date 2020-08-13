@@ -12,23 +12,13 @@ It can also be used to simply detect the format of your input.
 
 ### supported deck formats
 
-[**`YDK`**](examples/formats/ydk.txt),
-[**`YDKE`**](examples/formats/ydke.txt),
-an [**`Omega code`**](examples/formats/omega.txt),
-a [**`list of card names`**](examples/formats/names.txt)
-and a [**`JSON object`**](examples/formats/json.json)
-
-### format identifiers
-
-Each format is identified by a specific lowercase string of characters:
-
-|Identifier|Format|
-|:-:|:-|
-|`ydk`|**`YDK`**|
-|`ydke`|**`YDKE`**|
-|`omega`|**`Omega code`**|
-|`names`|**`list of card names`**|
-|`json`|**`JSON object`**|
+|Format|Identifier|
+|:-|:-:|
+|[**`YDK`**](examples/formats/ydk.txt)|`ydk`|
+|[**`YDKE`**](examples/formats/ydke.txt)|`ydke`|
+|[**`Omega code`**](examples/formats/omega.txt)|`omega`|
+|[**`List of card names`**](examples/formats/names.txt)|`names`|
+|[**`JSON object`**](examples/formats/json.json)|`json`|
 
 ### common query parameters
 
