@@ -85,7 +85,7 @@ function decode_query_deck(?string &$format = null): DeckList
         $decks->validate(true);
     }
     catch (\Exception $e) {
-        Http::fail($e->getMessage());
+        Http::fail($e->getMessage(), Http::BAD_REQUEST);
     }
 
     return $decks;
