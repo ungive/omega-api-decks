@@ -4,10 +4,6 @@ require(__DIR__ . '/../vendor/autoload.php');
 require(__DIR__ . '/common/format.php');
 require(__DIR__ . '/common/json.php');
 
-use Http\JsonResponse;
-
-use function Base\get_query_json_options;
-
 
 Http::allow_method('GET');
 
@@ -23,8 +19,7 @@ if ($convert_to !== null) {
 }
 
 foreach ($encoders as $name => $class)
-    $encoders[$name] = new $class();
-
+    $encoders[$name] = Config\create_encoder_from_class($class);
 
 $decks    = Base\decode_query_deck($input_format);
 $response = Base\create_json_response($input_format);

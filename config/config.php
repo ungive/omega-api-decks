@@ -25,7 +25,8 @@ Config::set_all([
     'encoders' => [
       Format::OMEGA => Format\OmegaFormatEncoder::class,
       Format::YDKE => Format\YdkeFormatEncoder::class,
-      Format::YDK => Format\YdkFormatEncoder::class
+      Format::YDK => Format\YdkFormatEncoder::class,
+      Format::NAMES => Format\NameFormatEncoder::class
     ],
     'decoders' => [
       Format::YDK => Format\YdkFormatDecoder::class,

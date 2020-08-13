@@ -7,8 +7,6 @@ use Game\DeckList;
 
 class YdkFormatEncoder implements FormatEncoder
 {
-    // Prefer Windows line endings over Unix
-    // because most users are on that platform.
     const EOL = "\n";
 
     public function encode(DeckList $list): string

@@ -5,6 +5,7 @@ namespace Config;
 use Config;
 use Format\FormatDecoder;
 use Format\FormatDecodeTester;
+use Format\FormatEncoder;
 use Format\NeedsRepository;
 use Game\Deck;
 use Game\Repository\Repository;
@@ -44,6 +45,18 @@ function create_repository_pdo(): \PDO
     return new \PDO("sqlite:$path");
 }
 
+
+function create_encoder_from_class(string $class): FormatEncoder
+{
+    if (!is_subclass_of($class, FormatEncoder::class))
+        throw new \Exception("$class is not a subclass of " . FormatEncoder::class);
+
+    $args = [];
+    if (is_subclass_of($class, NeedsRepository::class))
+        $args[] = get_repository();
+
+    return new $class(...$args);
+}
 
 function create_decoder_from_class(string $class): FormatDecoder
 {
