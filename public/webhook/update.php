@@ -7,7 +7,6 @@ set_time_limit(0);
 
 require('../../vendor/autoload.php');
 
-use Http\Http;
 use Utility\FileLock;
 
 
