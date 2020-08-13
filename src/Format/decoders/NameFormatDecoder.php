@@ -59,7 +59,17 @@ class NameFormatDecoder extends NeedsRepository implements FormatDecoder
                         "unable to parse line $line of input");
 
                 $deck_name = $matches[1];
-                $current_deck = $deck_list->$deck_name;
+                $deck = $deck_list->$deck_name;
+
+                if ($current_deck === null) {
+                    // in case there are cards before the first
+                    // separator we add all of them to the Main Deck.
+                    foreach ($cards as $card)
+                        $deck_list->main->add($card);
+                    $cards = [];
+                }
+
+                $current_deck = $deck;
                 continue;
             }
 
@@ -90,9 +100,9 @@ class NameFormatDecoder extends NeedsRepository implements FormatDecoder
             }
         }
 
-        if ($current_deck !== null && count($cards) > 0)
-            throw new FormatDecodeException(
-                "could not associate one or more cards with a deck");
+        // separators were used, so we're done here.
+        if ($current_deck !== null)
+            return $deck_list;
 
         $extra_deck = $deck_list->extra;
         $side_deck  = $deck_list->side;
