@@ -135,6 +135,7 @@ function update(string $source_url): bool
         CREATE TABLE card (
             id INTEGER PRIMARY KEY,
             cluster CHAR(2),
+            sanitized_name VARCHAR(128),
             name VARCHAR(128),
             type VARCHAR(8),
             match_name INTEGER
@@ -150,7 +151,7 @@ function update(string $source_url): bool
 
     SQL);
     $dest_db->exec("CREATE INDEX idx_card_cluster ON card(cluster);");
-    $dest_db->exec("CREATE INDEX idx_card_name ON card(name);");
+    $dest_db->exec("CREATE INDEX idx_card_name ON card(sanitized_name);");
     $dest_db->exec("CREATE INDEX idx_card_type ON card(type);");
     $dest_db->exec("CREATE INDEX idx_card_match_name ON card(match_name);");
 
@@ -158,20 +159,22 @@ function update(string $source_url): bool
 
     $cards = [];
     foreach ($rows as $row) {
-        $sanitized_name = sanitize_name($row['name']);
+        $name = $row['name'];
+        $sanitized_name = sanitize_name($name);
         $name_cluster = name_cluster($sanitized_name);
 
         $cards[] = [
             intval($row['id']),
             $name_cluster,
             $sanitized_name,
+            $name,
             $row['type'],
             intval($row['match_name'])
         ];
     }
 
     $dest_db->beginTransaction();
-    $columns = [ 'id', 'cluster', 'name', 'type', 'match_name' ];
+    $columns = [ 'id', 'cluster', 'sanitized_name', 'name', 'type', 'match_name' ];
     $retval = insert_chunked($dest_db, 'card', $columns, $cards, 256);
 
     if (!$retval) {

@@ -54,9 +54,9 @@ class SqliteRepository extends Repository
             SELECT
                 id,
                 type,
-                LEVENSHTEIN(:query, name) AS dist,
-                ABS(LENGTH(name) - LENGTH(:query)) AS diff,
-                LENGTH(name) AS len
+                LEVENSHTEIN(:query, sanitized_name) AS dist,
+                ABS(LENGTH(sanitized_name) - LENGTH(:query)) AS diff,
+                LENGTH(sanitized_name) AS len
             FROM card
             WHERE match_name AND cluster = :cluster
                 AND 1.0 * diff / len < 1.0 * :max_length_diff_per_letter
@@ -84,6 +84,30 @@ class SqliteRepository extends Repository
             throw new \Exception("card not found: $name");
 
         return $this->row_to_card($rows[0]);
+    }
+
+    public function get_name_by_code(int $code): string
+    {
+        $stmt = $this->db->prepare(<<<SQL
+
+            SELECT name
+            FROM card
+            WHERE id = :code
+
+        SQL);
+
+        if ($stmt === false)
+            throw new \Exception("failed to prepare select statement");
+
+        $stmt->bindValue(':code', $code);
+
+        $stmt->execute();
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($rows) === 0)
+            throw new \Exception("card code not found: $code");
+
+        return $rows[0]['name'];
     }
 
     private function row_to_card(array $row): Card

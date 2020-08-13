@@ -16,7 +16,5 @@ abstract class Repository
 
     public abstract function get_card_by_code(int $code): Card;
     public abstract function get_card_by_name(string $name): Card;
-
-    // public abstract function get_cards_by_code(int ...$codes): DataCardList;
-    // public abstract function get_cards_by_name(string ...$names): DataCardList;
+    public abstract function get_name_by_code(int $code): string;
 }
