@@ -10,7 +10,56 @@ It can also be used to simply detect the format of your input.
 
 ---
 
-### supported deck formats
+### Configuration
+
+You can configure the behaviour of the API in [`config/config.php`](/config/config.php).
+
+### Environment Variables
+
+In order to run this application, you need to configure some environment variables:
+
+```bash
+DATABASE_URL=https://example.com/database/cards.cdb
+CARD_IMAGE_URL=https:///example.com/images
+CARD_IMAGE_URL_EXT=jpg
+WEBHOOK_UPDATE_TOKEN=somerandomstring
+PORT=8080
+```
+
+URLs for images are built like this: `{CARD_IMAGE_URL}/{passcode}.{CARD_IMAGE_URL_EXT}`.
+
+The `WEBHOOK_UPDATE_TOKEN` exists to prevent unauthorized requests to the [`webhook/update`](/public/webhook/update.php) endpoint.
+
+### Development
+
+Run the following commands to set up your development environment:
+
+```
+$ composer install
+$ echo 'PORT=8080' >> {.env,.env.dev}
+# docker-compose up --build development
+```
+
+Both `.env` files need to exist and define the `PORT` variable, otherwise `docker-compose` will complain about invalid fields.
+
+You currently also need to have [`composer`](https://getcomposer.org/) installed on your local machine and install the required packages with it because the development service relies on the existence of the `vendor` folder and its contents in the root directory of the project.
+
+After starting the service with `docker-compose up` the server will automatically download and store the newest card database from your configured source (`DATABASE_URL`). This might take a bit depending of the size of the download and your bandwidth. The status will be shown in the logs (observable via `docker-compose logs -f`).
+
+### Production
+
+Run the following commands and you're ready to go:
+
+```
+# docker-compose up -d --build production
+# docker-compose exec production populate-cache
+```
+
+Populating the image cache will take a while, as all card images are downloaded and scaled down.
+
+---
+
+### Supported Deck Formats
 
 |Format|Identifier|
 |:-|:-:|
@@ -29,7 +78,7 @@ Cards in the list of names are associated with a deck by the following rules:
 
 Alternatively, one can describe where cards belong by putting a line in front of them that contains the name of the respective deck (`main`, `side` or `extra`, case-insensitive), similar to how it works with the [`YDK`](examples/formats/ydk.txt) format.
 
-### common query parameters
+### Common Query Parameters
 
 All endpoints have the following set of query parameters in common:  
 
@@ -45,7 +94,7 @@ All JSON endpoints also have the `?pretty` query parameter which formats JSON ni
 
 ---
 
-### endpoints
+### Endpoints
 
 ##### `/imageify`
 Generates an image of the deck list like you know it from YGOPro and friends.
@@ -93,7 +142,7 @@ The `error` field contains an error message describing why your request failed.
 
 ---
 
-### examples
+### Examples
 
 Using the [JSON input from the examples directory](examples/formats/json.json):
 
