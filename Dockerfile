@@ -46,7 +46,8 @@ RUN composer dump-autoload --no-dev --optimize
 
 ENV DATA_DIR /opt/data
 RUN mkdir -p ${DATA_DIR} && \
-    chown www-data ${DATA_DIR}
+    chown www-data:www-data ${DATA_DIR} && \
+    chmod g+s ${DATA_DIR}
 VOLUME ${DATA_DIR}
 
 COPY scripts /var/www/scripts
