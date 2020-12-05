@@ -27,7 +27,6 @@ RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 RUN mv $PHP_INI_DIR/php.ini-$PHP_ENV $PHP_INI_DIR/php.ini
 
 ENV COMPOSER_ALLOW_SUPERUSER 1
-RUN composer global require hirak/prestissimo --no-plugins --no-scripts
 
 
 WORKDIR /var/www
