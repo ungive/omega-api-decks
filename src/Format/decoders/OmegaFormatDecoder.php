@@ -25,35 +25,20 @@ class OmegaFormatDecoder extends NeedsRepository implements FormatDecoder
             throw new FormatDecodeException("could not inflate compressed data");
 
         # the first byte contains the size of the main and extra deck.
-        $main_and_extra_size = $this->unpack('C', $raw);
+        $main_and_extra_count = $this->unpack('C', $raw);
 
-        if ($main_and_extra_size < MainDeck::MIN_SIZE + ExtraDeck::MIN_SIZE)
-            throw new FormatDecodeException("Main or Extra Deck is too small");
-        if ($main_and_extra_size > MainDeck::MAX_SIZE + ExtraDeck::MAX_SIZE)
+        if ($main_and_extra_count > MainDeck::MAX_SIZE + ExtraDeck::MAX_SIZE)
             throw new FormatDecodeException("Main or Extra Deck is too large");
 
         # the second byte represents the size of the side deck.
         $side_count = $this->unpack('C', $raw);
 
-        if ($side_count < SideDeck::MIN_SIZE)
-            throw new FormatDecodeException("Side Deck is too small");
         if ($side_count > SideDeck::MAX_SIZE)
             throw new FormatDecodeException("Side Deck is too large");
 
-        # the first 40 cards always belong to the main deck.
-        # the last 15 cards (or all if no other remain) belong to
-        #   either the main or extra deck (not specified in the format).
-        # the remaining cards belong to the main deck.
-
-        $main_count = max(MainDeck::MIN_SIZE, $main_and_extra_size - ExtraDeck::MAX_SIZE);
-        $main_or_extra_count = $main_and_extra_size - $main_count;
-
         $deck_list = new DeckList();
 
-        for ($i = 0; $i < $main_count; $i++)
-            $deck_list->main->add(new Card($this->unpack_code($raw), DeckType::MAIN));
-
-        for ($i = 0; $i < $main_or_extra_count; $i++) {
+        for ($i = 0; $i < $main_and_extra_count; $i++) {
             $code = $this->unpack_code($raw);
             $card = $this->repository->get_card_by_code($code);
             $deck_list->get($card->deck_type)->add($card);
