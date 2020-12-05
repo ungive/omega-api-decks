@@ -11,6 +11,4 @@ set +x
 # TODO: if the database already exists, then run the update in the background
 #  otherwise wait until the update is complete
 
-update-database
-
 docker-php-entrypoint apache2-foreground
