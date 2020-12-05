@@ -19,7 +19,13 @@ if ($convert_to !== null) {
 }
 
 foreach ($encoders as $name => $class)
-    $encoders[$name] = Config\create_encoder_from_class($class);
+    try {
+        $encoders[$name] = Config\create_encoder_from_class($class);
+    }
+    catch (\Exception $e) {
+        $message = $e->getMessage();
+        Http::fail("an error occured while handling your request: $message");
+    }
 
 $decks    = Base\decode_query_deck($input_format);
 $response = Base\create_json_response($input_format);
