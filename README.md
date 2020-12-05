@@ -37,14 +37,15 @@ Run the following commands to set up your development environment:
 ```
 $ composer install
 $ echo 'PORT=8080' >> {.env,.env.dev}
-# docker-compose up --build development
+# docker-compose up -d --build development
+# docker-compose exec development update-database
 ```
 
 Both `.env` files need to exist and define the `PORT` variable, otherwise `docker-compose` will complain about invalid fields.
 
 You currently also need to have [`composer`](https://getcomposer.org/) installed on your local machine and install the required packages with it because the development service relies on the existence of the `vendor` folder and its contents in the root directory of the project.
 
-After starting the service with `docker-compose up` the server will automatically download and store the newest card database from your configured source (`DATABASE_URL`). This might take a bit depending of the size of the download and your bandwidth. The status will be shown in the logs (observable via `docker-compose logs -f`).
+[`update-database`](/scripts/update-database.php) will automatically download and store the newest card database from your configured source (`DATABASE_URL`). This might take a bit depending of the size of the download and your bandwidth. After that you won't have to download it again.
 
 ### Production
 
