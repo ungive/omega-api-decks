@@ -1,5 +1,7 @@
 ## omega-api-decks
 
+![Thumbnail showing a generated deck list image](/examples/imageify/banner.jpg)
+
 This is a service for converting a deck list to any of the following things:
 
 - another format
