@@ -36,16 +36,16 @@ Run the following commands to set up your development environment:
 
 ```
 $ composer install
-$ echo 'PORT=8080' >> {.env,.env.dev}
 # docker-compose up -d --build development
 # docker-compose exec development update-database
+# scripts/permissions.sh
 ```
-
-Both `.env` files need to exist and define the `PORT` variable, otherwise `docker-compose` will complain about invalid fields.
 
 You currently also need to have [`composer`](https://getcomposer.org/) installed on your local machine and install the required packages with it because the development service relies on the existence of the `vendor` folder and its contents in the root directory of the project.
 
 [`update-database`](/scripts/update-database.php) will automatically download and store the newest card database from your configured source (`DATABASE_URL`). This might take a bit depending of the size of the download and your bandwidth. After that you won't have to download it again.
+
+The last script fixes permissions of the `data`-folder in the root of the project folder, so that it can be written to by the development container.
 
 ### Production
 
@@ -81,11 +81,11 @@ Alternatively, one can describe where cards belong by putting a line in front of
 
 ### Common Query Parameters
 
-All endpoints have the following set of query parameters in common:  
+All endpoints have the following set of query parameters in common:
 
-**`?list=<input>`** — A deck list in any format. This format may be any of the above and is detected on the fly.  
+**`?list=<input>`** — A deck list in any format. This format may be any of the above and is detected on the fly.
 
-**`?<identifier>=<input>`** — `<identifier>` may be any valid identifier and informs the service about the input format. This way the service does not have to guess based on the input. This is the recommended option in case the input format is known at the time of requesting this endpoint.  
+**`?<identifier>=<input>`** — `<identifier>` may be any valid identifier and informs the service about the input format. This way the service does not have to guess based on the input. This is the recommended option in case the input format is known at the time of requesting this endpoint.
 
 `<input>` resembles the deck list that is to be handled by the request.
 
@@ -110,7 +110,7 @@ Parses input and outputs deck information in form of a `JSON` object.
 
 ##### `/convert`
 Converts a deck list from one format to all other formats.  
-The optional query parameter `&to=<identifier>` restricts the conversion to only one format.  
+The optional query parameter `&to=<identifier>` restricts the conversion to only one format.
 
 #### JSON structure
 
@@ -122,7 +122,7 @@ The JSON for a successful response is structure in the following way:
     "format": "<identifier>"
   },
   "data": {
-  
+
   }
 }
 ```
