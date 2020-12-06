@@ -1,11 +1,10 @@
 version: '3'
 
 services:
-
   production:
     build: .
     ports:
-      - ${PORT}:80
+      - ${PORT:-8000}:80
     env_file: .env
     volumes:
       - php-data:/opt/data
@@ -16,7 +15,7 @@ services:
       args:
         BUILD_DEVELOPMENT: 1
     ports:
-      - 8800:80
+      - ${PORT:-8080}:80
     env_file: .env.dev
     volumes:
       - ./src:/var/www/src
