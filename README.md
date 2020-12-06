@@ -183,3 +183,7 @@ You can omit the `to` query parameter to get all formats:
     }
 }
 ```
+
+Using the `/imageify` endpoint, you might generate an image like this:
+
+![Image of a Deck List](/examples/imageify/deck-list.jpeg)
