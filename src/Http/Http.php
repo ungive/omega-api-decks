@@ -74,10 +74,10 @@ class Http
     //     throw new \Exception("there are no query parameters");
     // }
 
-    public static function get_query_parameter(string $name, bool $required = true): ?string
+    public static function get_query_parameter(string $name, bool $required = true, $default = null): ?string
     {
         if (!isset($_GET[$name])) {
-            if (!$required) return null;
+            if (!$required) return $default;
 
             $message = "query parameter '$name' is required";
             self::fail($message, self::BAD_REQUEST);
