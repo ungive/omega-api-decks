@@ -96,7 +96,23 @@ $extension = ImageType::extension($image_type, false);
 header("Content-Type: $mime_type");
 header("Content-Disposition: filename=$filename.$extension");
 
-$deck_image->echo($image_type, false);
+$quality_raw = Http::get_query_parameter('quality', false, -1);
+$quality = intval($quality_raw);
+
+if (!is_numeric($quality_raw)) Http::fail("quality must be numeric");
+if ($quality < -1 || $quality > 100)
+    Http::fail("quality must be between 0 and 100, inclusive");
+
+switch ($image_type) {
+case ImageType::JPEG: break;
+case ImageType::PNG:
+    $quality = intval(round($quality * 9 / 100));
+    break;
+default:
+    Http::fail("the quality parameter is not applicable for $mime_type");
+}
+
+$deck_image->echo($image_type, false, $quality);
 
 
 
