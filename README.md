@@ -100,7 +100,8 @@ All JSON endpoints also have the `?pretty` query parameter which formats JSON ni
 ### Endpoints
 
 ##### `/imageify`
-Generates an image of the deck list like you know it from YGOPro and friends.
+Generates an image of the deck list like you know it from YGOPro and friends.  
+The optional query parameter `&quality=<value>` configures the resulting image quality. Accepts values from 0 (worst) to 100 (best).
 
 #### JSON endpoints
 
