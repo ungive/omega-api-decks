@@ -4,3 +4,5 @@
 // can emit a gzip warning that messes up any image that we try to transmit.
 if (ini_get("display_errors") === '1')
     error_reporting(E_ALL & ~E_WARNING);
+
+header("Access-Control-Allow-Origin: *"); // Enable CORS.
