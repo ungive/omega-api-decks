@@ -14,7 +14,7 @@ trim_trailing_whitespace = false
 trim_trailing_whitespace = false
 insert_final_newline = false
 
-[*.{json,yaml,yml}]
+[*.{css,js,json,yaml,yml,html}]
 indent_size = 2
 
 [config/config*.php]
