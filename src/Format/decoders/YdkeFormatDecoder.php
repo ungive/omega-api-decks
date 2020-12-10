@@ -45,6 +45,9 @@ class YdkeFormatDecoder implements FormatDecoder
 
     private function decode_codes(string $encoded): array
     {
+        if (strlen($encoded) == 0)
+            return [];
+
         if (!($raw = base64_decode($encoded, true)))
             throw new FormatDecodeException("malformed base64");
         return unpack("V*", $raw);
