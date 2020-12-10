@@ -32,7 +32,13 @@ $response = Base\create_json_response($input_format);
 
 $formats = [];
 foreach ($encoders as $name => $encoder)
-    $formats[$name] = $encoder->encode($decks);
+    try {
+        $formats[$name] = $encoder->encode($decks);
+    }
+    catch (\Exception $e) {
+        $message = $e->getMessage();
+        Http::fail("an error occured while handling your request: $message");
+    }
 
 $response->data('formats', $formats);
 
