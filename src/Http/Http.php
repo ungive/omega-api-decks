@@ -102,6 +102,9 @@ class Http
         if ($response instanceof JsonErrorResponse)
             get_logger('http')->alert("failed with: " . $response->get_error());
 
+        if (Http::get_query_parameter('pretty', false) !== null)
+            $response->options(JSON_PRETTY_PRINT);
+
         self::header('Content-Type', $response::mime_type());
         echo $response->to_json();
         self::close($code);
