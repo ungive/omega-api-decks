@@ -1,0 +1,24 @@
+0. Definitions.
+
+  "I" refers to me, the owner of this repository and the code therein. Refer to
+the LICENSE file in the root of the project for more information.
+
+  A "Card" refers to any playing card of the Yu-Gi-Oh!® Trading Card Game.
+
+  The "Artwork" refers to the visual painting or illustration on a Card. For
+more information visit <https://yugipedia.com/wiki/Artwork>.
+
+  An "Image" refers to the parsed content - or parts of it - of a file ending
+with a file extension like jpg, jpeg, png or anything alike.
+
+1. Statement.
+
+  Artworks of Cards depicted in any Image in the same folder as this file or
+any subfolders thereof are property of the following entity:
+
+  © Studio Dice/SHUEISHA, TV TOKYO, KONAMI
+  <https://www.yugioh-card.com/>
+
+  I hereby refrain from any copyright claims of those Artworks or anything
+related to it. I am in no way affiliated with the named entity and do not own
+or claim to own any of its property.
