@@ -108,9 +108,16 @@ class Http
     }
 
     public static function fail(string $message,
-                                int $code = self::INTERNAL_SERVER_ERROR): void
+                                int $code = self::INTERNAL_SERVER_ERROR,
+                                array $extra_meta = [],
+                                array $extra_data = []): void
     {
-        self::send(new JsonErrorResponse($message), $code);
+        $response = new JsonErrorResponse($message);
+
+        foreach ($extra_meta as $key => $value) $response->meta($key, $value);
+        foreach ($extra_data as $key => $value) $response->data($key, $value);
+
+        self::send($response, $code);
     }
 
     public static function close(?int $code = null)

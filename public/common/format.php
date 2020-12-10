@@ -74,7 +74,9 @@ function decode_query_deck(?string &$format = null): DeckList
     }
     catch (FormatDecodeException $e) {
         $message = $e->getMessage();
-        Http::fail("failed to decode deck list: $message", Http::BAD_REQUEST);
+        $errors = $e->getErrors();
+        Http::fail("failed to decode deck list: $message", Http::BAD_REQUEST,
+            [], [ 'format_errors' => $errors ]);
     }
     catch (\Exception $e) {
         $message = $e->getMessage();

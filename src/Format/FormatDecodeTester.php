@@ -23,6 +23,8 @@ class FormatDecodeTester implements FormatDecoder
             throw new FormatDecodeException(
                 "cannot decode without any decoders");
 
+        $errors = [];
+
         foreach ($this->decoders as $name => $decoder)
             try {
                 $list = $decoder->decode($input);
@@ -31,12 +33,13 @@ class FormatDecodeTester implements FormatDecoder
                 break;
             }
             catch (FormatDecodeException $e) {
+                $errors[$name] = $e->getMessage();
                 $exception = $e;
             }
 
         if ($exception !== null)
             throw new FormatDecodeException(
-                "could not determine format from input");
+                "could not determine format from input", $errors);
 
         return $list;
     }
