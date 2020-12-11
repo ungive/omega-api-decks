@@ -55,6 +55,7 @@ Run the following commands and you're ready to go:
 
 ```
 # docker-compose up -d --build production
+# docker-compose exec production update-database
 # docker-compose exec production populate-cache
 ```
 
