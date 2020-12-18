@@ -32,6 +32,18 @@ URLs for images are built like this: `{CARD_IMAGE_URL}/{passcode}.{CARD_IMAGE_UR
 
 The `WEBHOOK_UPDATE_TOKEN` exists to prevent unauthorized requests to the [`webhook/update`](/public/webhook/update.php) endpoint.
 
+### Production
+
+Run the following commands and you're ready to go:
+
+```
+# docker-compose up -d --build production
+# docker-compose exec production update-database
+# docker-compose exec production populate-cache
+```
+
+Populating the image cache will take a while, as all card images are downloaded and scaled down.
+
 ### Development
 
 Run the following commands to set up your development environment:
@@ -48,18 +60,6 @@ You currently also need to have [`composer`](https://getcomposer.org/) installed
 [`update-database`](/scripts/update-database.php) will automatically download and store the newest card database from your configured source (`DATABASE_URL`). This might take a bit depending of the size of the download and your bandwidth. After that you won't have to download it again.
 
 The last script fixes permissions of the `data`-folder in the root of the project folder, so that it can be written to by the development container.
-
-### Production
-
-Run the following commands and you're ready to go:
-
-```
-# docker-compose up -d --build production
-# docker-compose exec production update-database
-# docker-compose exec production populate-cache
-```
-
-Populating the image cache will take a while, as all card images are downloaded and scaled down.
 
 ---
 
