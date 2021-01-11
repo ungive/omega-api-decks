@@ -38,9 +38,11 @@ Run the following commands and you're ready to go:
 
 ```
 # docker-compose up -d --build production
-# docker-compose exec production update-database
-# docker-compose exec production populate-cache
+# docker-compose exec -u www-data production update-database
+# docker-compose exec -u www-data production populate-cache
 ```
+
+**NOTE**: It's important to run the above `exec` commands as the user `www-data`, otherwise created files will be owned by `root` and cannot be modified by the `httpd` instance when invoked through HTTP.
 
 [`update-database`](scripts/update-database.php) will automatically download and store the newest card database from your configured source (`DATABASE_URL`). This might take a bit depending of the size of the download and your bandwidth. After that you won't have to download it again.
 
