@@ -1,6 +1,6 @@
 ## omega-api-decks
 
-![Thumbnail showing a generated deck list image](/examples/imageify/banner.jpg)
+![Thumbnail showing a generated deck list image](examples/imageify/banner.jpg)
 
 This is a service for converting a deck list to any of the following things:
 
@@ -14,7 +14,7 @@ It can also be used to simply detect the format of your input.
 
 ### Configuration
 
-You can configure the behaviour of the API in [`config/config.php`](/config/config.php).
+You can configure the behaviour of the API in [`config/config.php`](config/config.php).
 
 ### Environment Variables
 
@@ -30,7 +30,7 @@ PORT=8080
 
 URLs for images are built like this: `{CARD_IMAGE_URL}/{passcode}.{CARD_IMAGE_URL_EXT}`.
 
-The `WEBHOOK_UPDATE_TOKEN` exists to prevent unauthorized requests to the [`webhook/update`](/public/webhook/update.php) endpoint.
+The `WEBHOOK_UPDATE_TOKEN` exists to prevent unauthorized requests to the [`webhook/update`](public/webhook/update.php) endpoint.
 
 ### Production
 
@@ -42,7 +42,7 @@ Run the following commands and you're ready to go:
 # docker-compose exec production populate-cache
 ```
 
-[`update-database`](/scripts/update-database.php) will automatically download and store the newest card database from your configured source (`DATABASE_URL`). This might take a bit depending of the size of the download and your bandwidth. After that you won't have to download it again.
+[`update-database`](scripts/update-database.php) will automatically download and store the newest card database from your configured source (`DATABASE_URL`). This might take a bit depending of the size of the download and your bandwidth. After that you won't have to download it again.
 
 Populating the image cache will take a while, as all card images are downloaded and scaled down.
 
