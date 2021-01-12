@@ -36,6 +36,8 @@ if ($database_url === false) {
 // close the connection
 http_response_code(Http::OK);
 header("Connection: close");
+// https://github.com/docker-library/php/issues/1113
+header("Content-Encoding: none");
 header("Content-Length: " . 0);
 ob_end_flush();
 flush();
