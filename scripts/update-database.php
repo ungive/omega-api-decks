@@ -2,6 +2,8 @@
 
 require('../vendor/autoload.php');
 
+use Utility\FileLock;
+
 
 $log = get_logger('database');
 
@@ -13,7 +15,12 @@ if ($database_url === false) {
 }
 
 
-# TODO: check the update lock file here as well.
+$update_lock = new FileLock(Config::get('repository')['update_lock_file']);
+if ($update_lock->is_locked()) {
+    $log->warning("aborting: an update seems to be in progress already");
+    exit(1);
+}
 
-
+$update_lock->lock();
 Db\update($database_url);
+$update_lock->unlock();
