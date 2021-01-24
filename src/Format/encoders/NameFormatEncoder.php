@@ -20,7 +20,7 @@ class NameFormatEncoder extends NeedsRepository implements FormatEncoder
         $side = self::EOL . $side;
 
         $separator = self::EOL . self::EOL;
-        return implode($separator, array_filter([ &$main, &$extra, &$side ]));
+        return trim(implode($separator, [ &$main, &$extra, &$side ]));
     }
 
     public function encode_deck(Deck $deck): string
