@@ -55,8 +55,7 @@ class NameFormatDecoder extends NeedsRepository implements FormatDecoder
             if (!$result) {
                 $result = preg_match("/($deck_names)/", strtolower($entry), $matches);
                 if (!$result)
-                    throw new FormatDecodeException(
-                        "unable to parse line $line of input");
+                    continue;
 
                 $deck_name = $matches[1];
                 $deck = $deck_list->$deck_name;
