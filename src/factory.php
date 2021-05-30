@@ -108,7 +108,7 @@ function create_decode_tester(string ...$format_names): FormatDecodeTester
 
 function get_image_url(ImageKey $key): string
 {
-    $url = Config::get_env('CARD_IMAGE_URL');
+    $url = rtrim(Config::get_env('CARD_IMAGE_URL'), "/");
     $extension = Config::get_env('CARD_IMAGE_URL_EXT');
 
     $name = $key->value();
