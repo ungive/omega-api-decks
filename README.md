@@ -22,7 +22,7 @@ In order to run this application, you need to configure some environment variabl
 
 ```bash
 DATABASE_URL=https://example.com/database/cards.cdb
-CARD_IMAGE_URL=https:///example.com/images
+CARD_IMAGE_URL=https://example.com/images
 CARD_IMAGE_URL_EXT=jpg
 WEBHOOK_UPDATE_TOKEN=somerandomstring
 PORT=8080
