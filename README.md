@@ -46,7 +46,7 @@ Run the following commands and you're ready to go:
 
 [`update-database`](scripts/update-database.php) will automatically download and store the newest card database from your configured source (`DATABASE_URL`). This might take a bit depending of the size of the download and your bandwidth. After that you won't have to download it again.
 
-Populating the image cache will take a while, as all card images are downloaded and scaled down.
+Populating the image cache will take a while, as all card images are downloaded and scaled down. In case an image is missing in the local cache during a request, it is downloaded within that request and persisted locally. It's thus not strictly necessary to pre-populate the cache, but doing this will reduce the number of cache misses during any request and the delay that this process would cause to a minimum. Once an image is cached it will be reused by all subsequent requests. The images are scaled down to normalize their resolution and only store as much data as is necessary.
 
 ### Development
 
