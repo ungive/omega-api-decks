@@ -12,7 +12,6 @@
       "src/definitions.php",
       "src/factory.php",
       "config/config.php",
-
       "src/scripts/db.php",
       "src/scripts/helpers.php",
       "src/scripts/log.php"

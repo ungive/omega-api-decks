@@ -42,7 +42,7 @@ Config::set_all([
     // the path to the background image for a deck list.
     // the dimensions of the tables which are defined later
     // in this file depend on the characteristics of this image.
-    'background' => STATIC_DIR . '/background-simple.jpg',
+    'background' => STATIC_DIR . '/background-omega.png',
 
     // the placeholder image for a card that is not found in the database.
     'placeholder' => STATIC_DIR . '/unknown.jpg',
