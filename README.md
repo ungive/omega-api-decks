@@ -28,11 +28,15 @@ WEBHOOK_UPDATE_TOKEN=somerandomstring
 PORT=8080
 ```
 
+An example can be found in the file `.env.example`.
+
 URLs for images are built like this: `{CARD_IMAGE_URL}/{passcode}.{CARD_IMAGE_URL_EXT}`.
 
 The `WEBHOOK_UPDATE_TOKEN` exists to prevent unauthorized requests to the [`webhook/update`](public/webhook/update.php) endpoint.
 
 ### Production
+
+Make sure to create a `.env` file with above environment variables.
 
 Run the following commands and you're ready to go:
 
@@ -49,6 +53,8 @@ Run the following commands and you're ready to go:
 Populating the image cache will take a while, as all card images are downloaded and scaled down. In case an image is missing in the local cache during a request, it is downloaded within that request and persisted locally. It's thus not strictly necessary to pre-populate the cache, but doing this will reduce the number of cache misses during any request and the delay that this process would cause to a minimum. Once an image is cached it will be reused by all subsequent requests. The images are scaled down to normalize their resolution and only store as much data as is necessary.
 
 ### Development
+
+Make sure to create a `.env.dev` file with above environment variables.
 
 Run the following commands to set up your development environment:
 
