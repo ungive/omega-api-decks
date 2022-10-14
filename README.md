@@ -37,9 +37,9 @@ The `WEBHOOK_UPDATE_TOKEN` exists to prevent unauthorized requests to the [`webh
 Run the following commands and you're ready to go:
 
 ```
-# docker-compose up -d --build production
-# docker-compose exec -u www-data production update-database
-# docker-compose exec -u www-data production populate-cache
+# docker compose up -d --build production
+# docker compose exec -u www-data production update-database
+# docker compose exec -u www-data production populate-cache
 ```
 
 **NOTE**: It's important to run the above `exec` commands as the user `www-data`, otherwise created files will be owned by `root` and cannot be modified by the `httpd` instance when invoked through HTTP.
@@ -54,8 +54,8 @@ Run the following commands to set up your development environment:
 
 ```
 $ composer install
-# docker-compose up -d --build development
-# docker-compose exec development update-database
+# docker compose up -d --build development
+# docker compose exec development update-database
 # scripts/permissions.sh
 ```
 
