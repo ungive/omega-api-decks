@@ -7,8 +7,8 @@ fi
 
 USER=${1:-$SUDO_USER}
 
-WWW_UID=$(docker-compose exec development id www-data -u | tr -d '\r')
-WWW_GID=$(docker-compose exec development id www-data -g | tr -d '\r')
+WWW_UID=$(docker compose exec development id www-data -u | tr -d '\r')
+WWW_GID=$(docker compose exec development id www-data -g | tr -d '\r')
 echo "www-data uid:gid: $WWW_UID:$WWW_GID"
 
 set -x
