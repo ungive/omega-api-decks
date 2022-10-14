@@ -24,6 +24,7 @@ In order to run this application, you need to configure some environment variabl
 DATABASE_URL=https://example.com/database/cards.cdb
 CARD_IMAGE_URL=https://example.com/images
 CARD_IMAGE_URL_EXT=jpg
+REQUEST_TOKEN=somerandomstring
 WEBHOOK_UPDATE_TOKEN=somerandomstring
 PORT=8080
 ```
@@ -32,7 +33,11 @@ An example can be found in the file `.env.example`.
 
 URLs for images are built like this: `{CARD_IMAGE_URL}/{passcode}.{CARD_IMAGE_URL_EXT}`.
 
-The `WEBHOOK_UPDATE_TOKEN` exists to prevent unauthorized requests to the [`webhook/update`](public/webhook/update.php) endpoint.
+The `REQUEST_TOKEN` is optional and if present, requires a token in the URL path for authorized access to every API endpoint. Pass it as `?token=somerandomstring` with the value that is set in your env-file.
+
+The `WEBHOOK_UPDATE_TOKEN` exists to prevent unauthorized requests to the [`webhook/update`](public/webhook/update.php) endpoint. It must be set and is separate from the `REQUEST_TOKEN`. Pass it as `?token=somerandomstring` with the value that is set in your env-file.
+
+Make sure you generate a secure (random) token and rebuild the container whenever you change any environment variables.
 
 ### Production
 

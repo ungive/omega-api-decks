@@ -10,6 +10,7 @@ use Render\Vector;
 
 
 Http::allow_method('GET');
+Http::check_token('token', 'REQUEST_TOKEN');
 
 $decks = Base\decode_query_deck();
 

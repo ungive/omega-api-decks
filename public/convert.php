@@ -6,6 +6,7 @@ require(__DIR__ . '/common/json.php');
 
 
 Http::allow_method('GET');
+Http::check_token('token', 'REQUEST_TOKEN');
 
 $convert_to = Http::get_query_parameter('to', false);
 $encoders   = Config::get('formats')['encoders'];

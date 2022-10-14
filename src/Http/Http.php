@@ -10,6 +10,7 @@ class Http
     const OK = 200;
 
     const BAD_REQUEST = 400;
+    const UNAUTHORIZED = 401;
     const NOT_FOUND = 404;
     const METHOD_NOT_ALLOWED = 405;
 
@@ -28,6 +29,15 @@ class Http
     public static function allow_method(string $method): void
     {
         self::allow_methods($method);
+    }
+
+    public static function check_token(string $param_name, string $env_var): void
+    {
+        $expected_token = getenv($env_var);
+        if ($expected_token !== false && (!isset($_GET[$param_name]) || !hash_equals($_GET[$param_name], $expected_token))) {
+            echo 'unauthorized';
+            Http::close(Http::UNAUTHORIZED);
+        }
     }
 
     // public static function expect_query_parameter_count(int $count): void

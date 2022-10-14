@@ -21,7 +21,7 @@ if (!isset($_GET[$token_param])) {
 }
 
 $expected_token = getenv('WEBHOOK_UPDATE_TOKEN');
-if ($expected_token !== false && $_GET[$token_param] !== $expected_token) {
+if ($expected_token !== false && !hash_equals($_GET[$token_param], $expected_token)) {
     $log->critical("aborting: invalid token: " . $_GET[$token_param]);
     Http::close(Http::NOT_FOUND);
 }
