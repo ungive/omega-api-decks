@@ -50,6 +50,11 @@ class Table extends Rectangle implements \Countable
 
     public function cell_factory(): CellFactory { return $this->cell_factory; }
 
+    public function get_root(): Vector
+    {
+        return new Vector($this->root->x(), $this->root->y());
+    }
+
     public function root(int $x, int $y): void
     {
         $this->root = new Vector($x, $y);

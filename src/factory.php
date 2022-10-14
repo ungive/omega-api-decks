@@ -8,6 +8,7 @@ use Format\FormatDecodeTester;
 use Format\FormatEncoder;
 use Format\NeedsRepository;
 use Game\Deck;
+use Game\MainDeck;
 use Game\Repository\Repository;
 use Game\Repository\SqliteRepository;
 use Image\Image;
@@ -155,7 +156,7 @@ function create_image_cache(): ImageCache
     return $cache;
 }
 
-function create_table(string $name): Table
+function create_table(string $name, bool $is_center_deck): Table
 {
     $tables = Config::get('tables');
 
@@ -176,7 +177,13 @@ function create_table(string $name): Table
     $table->layout($T['layout']['primary'], $T['layout']['secondary']);
     $table->overlap($T['overlap']);
 
-    $table->root($T['root']->x(), $T['root']->y());
+    $root_x = $T['root']->x();
+    $root_y = $T['root']->y();
+    if ($is_center_deck) {
+        $root_x += $T['root_center_offset']->x();
+        $root_y += $T['root_center_offset']->y();
+    }
+    $table->root($root_x, $root_y);
     $table->spacing($T['spacing']->horizontal(), $T['spacing']->vertical());
 
     return $table;
@@ -184,7 +191,8 @@ function create_table(string $name): Table
 
 function create_deck_table(string $name, Deck $deck): Table
 {
-    $table = create_table($name);
+    $is_center_deck = $deck instanceof MainDeck && $deck->count() <= MainDeck::MIN_SIZE;
+    $table = create_table($name, $is_center_deck);
 
     foreach ($deck->cards() as $card)
         $table->push($card);

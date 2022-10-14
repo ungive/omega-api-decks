@@ -103,6 +103,7 @@ Config::set('tables', [
 
   'main' => [
     'root' => new Vector($table_x, 60),
+    'root_center_offset' => new Vector(0, 24 - $cell_spacing->vertical()),
     'spacing' => $cell_spacing,
     'width' => $table_width,
     'height' => 526,
