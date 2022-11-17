@@ -73,17 +73,12 @@ function name_cluster(string $s, string $placeholder = '_'): string
     return $c1 . $c2;
 }
 
-function update(string $source_url): bool
+function download_file_with_info($log, $source_path, $source_url): bool
 {
-    $log = get_logger('database');
-
-    $log->info("downloading database from remote...");
-
-    $source_path = temp_filename();
     $download_success = download_file($source_path, $source_url, $status_code);
 
     if (!$download_success) {
-        $message = "download failed ";
+        $message = "download failed";
         if ($status_code)
             $message .= " (HTTP status code $status_code)";
 
@@ -91,8 +86,19 @@ function update(string $source_url): bool
         return false;
     }
 
-    $log->info("download successful. converting...");
+    return true;
+}
 
+function update_database(string $source_url): bool
+{
+    $log = get_logger('database');
+
+    $log->info("downloading database from remote...");
+
+    $source_path = temp_filename();
+    if (!download_file_with_info($log, $source_path, $source_url)) {
+        return false;
+    }
 
     $src_db = new \PDO("sqlite:$source_path");
     $src_db->exec("CREATE INDEX idx_texts_name ON texts(name);");
@@ -188,7 +194,76 @@ function update(string $source_url): bool
     rename($write_path, $dest_path);
     chmod($dest_path, 0664); // anyone may read
 
+    if (!update_image_urls()) {
+        return false;
+    }
+
     $log->info("SUCCESS - update completed");
+
+    return true;
+}
+
+function update_image_urls(): bool
+{
+    $log = get_logger('database');
+
+    $log->info("updating image urls...");
+
+    $lookup_json_url = getenv('CARD_IMAGE_LOOKUP_JSON_URL');
+    $url_prefix = getenv('CARD_IMAGE_URL');
+    $url_postfix = getenv('CARD_IMAGE_URL_EXT');
+
+    $dest_path = Config::get('image_urls')['lookup_json_path'];
+
+    if (file_exists($dest_path)) {
+        unlink($dest_path);
+    }
+
+    $has_image_source = false;
+
+    $lookup_table = [];
+
+    if ($url_prefix !== false && $url_postfix !== false) {
+        $has_image_source = true;
+
+        $url = rtrim($url_prefix, "/");
+        $extension = ltrim($url_postfix, ".");
+
+        $db = Config\create_repository_pdo();
+        $cards = $db->query(" SELECT id FROM card ORDER BY CAST(id AS TEXT) ");
+
+        foreach ($cards as $row) {
+            $code = $row['id'];
+            $lookup_table["$code"] = "$url/$code.$extension";
+        }
+    }
+
+    if ($lookup_json_url !== false) {
+        $has_image_source = true;
+
+        $write_path = temp_filename();
+        if (!download_file_with_info($log, $write_path, $lookup_json_url)) {
+            return false;
+        }
+        $contents = file_get_contents($write_path);
+        $lookup_table_merge = json_decode($contents, true);
+        foreach ($lookup_table_merge as $key => $value) {
+            if (!array_key_exists($key, $lookup_table)) {
+                $lookup_table["$key"] = $value;
+            }
+        }
+
+        unlink($write_path);
+    }
+
+    if (!$has_image_source) {
+        $log->error('missing card image source in config');
+        return false;
+    }
+
+    $data = json_encode($lookup_table);
+    file_put_contents($dest_path, $data);
+    chmod($dest_path, 0664); // anyone may read
 
     return true;
 }

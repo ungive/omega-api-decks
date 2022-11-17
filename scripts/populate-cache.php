@@ -18,6 +18,9 @@ $cache->loader(function (ImageKey $key, int $type): ?Image {
 
     try {
         $url = Config\get_image_url($key);
+        if ($url === null) {
+            return null;
+        }
         return Image::from_url($url, $type);
     }
     catch (\Exception $e) {

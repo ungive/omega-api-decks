@@ -107,21 +107,28 @@ function create_decode_tester(string ...$format_names): FormatDecodeTester
     return $tester;
 }
 
-function get_image_url(ImageKey $key): string
+function get_image_url(ImageKey $key): ?string
 {
-    $url = rtrim(Config::get_env('CARD_IMAGE_URL'), "/");
-    $extension = ltrim(Config::get_env('CARD_IMAGE_URL_EXT'), ".");
+    $lookup_json_path = Config::get('image_urls')['lookup_json_path'];
+    $contents = file_get_contents($lookup_json_path);
+    $lookup_table = json_decode($contents, true);
 
     $name = $key->value();
+    if (!array_key_exists("$name", $lookup_table)) {
+        return null;
+    }
 
-    return "$url/$name.$extension";
+    return $lookup_table["$name"];
 }
 
 function image_loader(ImageKey $key, int $type): Image
 {
     try {
         $url = get_image_url($key);
-        $image = Image::from_url($url, $type);
+        $image = null;
+        if ($url !== null) {
+            $image = Image::from_url($url, $type);
+        }
     }
     catch (\Exception $e) {
         $image = null;
@@ -140,9 +147,6 @@ function image_loader(ImageKey $key, int $type): Image
 
 function create_image_cache(): ImageCache
 {
-    $type = Config::get('output')['image_type'];
-    $extension = Config::get_env('CARD_IMAGE_URL_EXT');
-
     $cache = new ImageCache(
         Config::get('cache')['directory'],
         Config::get('cache')['subfolder_length']
@@ -151,7 +155,7 @@ function create_image_cache(): ImageCache
     $loader = \Closure::fromCallable(__NAMESPACE__ . '\\image_loader');
 
     $cache->loader($loader);
-    $cache->type($type, $extension);
+    $cache->type(\Image\ImageType::AUTO);
 
     return $cache;
 }

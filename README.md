@@ -22,6 +22,7 @@ In order to run this application, you need to configure some environment variabl
 
 ```bash
 DATABASE_URL=https://example.com/database/cards.cdb
+CARD_IMAGE_LOOKUP_JSON_URL=https://example.com/image_urls.json
 CARD_IMAGE_URL=https://example.com/images
 CARD_IMAGE_URL_EXT=jpg
 REQUEST_TOKEN=somerandomstring
@@ -31,7 +32,7 @@ PORT=8080
 
 An example can be found in the file `.env.example`.
 
-URLs for images are built like this: `{CARD_IMAGE_URL}/{passcode}.{CARD_IMAGE_URL_EXT}`.
+URLs for images are built like this: `{CARD_IMAGE_URL}/{passcode}.{CARD_IMAGE_URL_EXT}`. There is also a `CARD_IMAGE_LOOKUP_JSON_URL` which should give a JSON file that maps card IDs (`passcode`) to a valid image URL. At least one of these options must be given. If both are given, the results of `CARD_IMAGE_URL` are preferred.
 
 The `REQUEST_TOKEN` is optional and if present, requires a token in the URL path for authorized access to every API endpoint. Pass it as `?token=somerandomstring` with the value that is set in your env-file.
 

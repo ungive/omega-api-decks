@@ -50,5 +50,5 @@ if ($update_lock->is_locked()) {
 }
 
 $update_lock->lock();
-Db\update($database_url);
+Db\update_database($database_url);
 $update_lock->unlock();

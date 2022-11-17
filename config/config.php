@@ -88,6 +88,11 @@ Config::set_all([
     'update_lock_file' => Config::get_env('DATA_DIR') . '/update.lock~'
   ],
 
+  'image_urls' => [
+    // path to the JSON file containg ID -> URL key-value pairs.
+    'lookup_json_path' => Config::get_env('DATA_DIR') . '/imgurls.json',
+  ],
+
 ]);
 
 
