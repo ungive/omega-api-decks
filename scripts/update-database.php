@@ -22,5 +22,14 @@ if ($update_lock->is_locked()) {
 }
 
 $update_lock->lock();
-Db\update_database($database_url);
+if (count($argv) == 1) {
+    Db\update_database($database_url);
+    Db\update_image_urls();
+}
+else if (in_array("--database", $argv)) {
+    Db\update_database($database_url);
+}
+else if (in_array("--image-urls", $argv)) {
+    Db\update_image_urls();
+}
 $update_lock->unlock();

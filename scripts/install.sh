@@ -6,7 +6,7 @@ function create_script() {
 cat << EOF
 #!/bin/bash
 cd "$(pwd)"
-php "$script"
+php "$script" "\$@"
 EOF
 }
 

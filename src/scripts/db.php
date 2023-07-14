@@ -194,11 +194,7 @@ function update_database(string $source_url): bool
     rename($write_path, $dest_path);
     chmod($dest_path, 0664); // anyone may read
 
-    if (!update_image_urls()) {
-        return false;
-    }
-
-    $log->info("SUCCESS - update completed");
+    $log->info("SUCCESS - database update completed");
 
     return true;
 }
@@ -264,6 +260,8 @@ function update_image_urls(): bool
     $data = json_encode($lookup_table);
     file_put_contents($dest_path, $data);
     chmod($dest_path, 0664); // anyone may read
+
+    $log->info("SUCCESS - image url update completed");
 
     return true;
 }
