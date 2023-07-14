@@ -65,13 +65,11 @@ Make sure to create a `.env.dev` file with above environment variables.
 Run the following commands to set up your development environment:
 
 ```
-$ composer install
+# ./composer.sh install
 # docker compose up -d --build development
 # docker compose exec development update-database
 # scripts/permissions.sh
 ```
-
-You currently also need to have [`composer`](https://getcomposer.org/) installed on your local machine and install the required packages with it because the development service relies on the existence of the `vendor` folder and its contents in the root directory of the project.
 
 The last command fixes permissions of the `data`-folder in the root of the project, so that it can be written to by the development container.
 
