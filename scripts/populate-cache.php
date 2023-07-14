@@ -15,17 +15,7 @@ $log = get_logger('cache');
 
 $cache = Config\create_image_cache();
 $cache->loader(function (ImageKey $key, int $type): ?Image {
-
-    try {
-        $url = Config\get_image_url($key);
-        if ($url === null) {
-            return null;
-        }
-        return Image::from_url($url, $type);
-    }
-    catch (\Exception $e) {
-        return null;
-    }
+    return Config\image_loader($key, $type, false);
 });
 
 

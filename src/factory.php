@@ -107,7 +107,7 @@ function create_decode_tester(string ...$format_names): FormatDecodeTester
     return $tester;
 }
 
-function get_image_url(ImageKey $key): ?string
+function get_image_urls(ImageKey $key): array
 {
     $lookup_json_path = Config::get('image_urls')['lookup_json_path'];
     $contents = file_get_contents($lookup_json_path);
@@ -121,26 +121,27 @@ function get_image_url(ImageKey $key): ?string
     return $lookup_table["$name"];
 }
 
-function image_loader(ImageKey $key, int $type): Image
+function image_loader(ImageKey $key, int $type, bool $allow_placeholder = true): ?Image
 {
-    try {
-        $url = get_image_url($key);
-        $image = null;
-        if ($url !== null) {
+    $urls = get_image_urls($key);
+    $image = null;
+
+    foreach ($urls as $url) {
+        try {
             $image = Image::from_url($url, $type);
+            break;
+        }
+        catch (\Exception $e) {
+            $image = null;
         }
     }
-    catch (\Exception $e) {
-        $image = null;
-    }
 
-    if ($image === null) {
+    if ($allow_placeholder && $image === null) {
         $placeholder = Config::get('images')['placeholder'];
         $image = MemoryImage::from_file($placeholder);
+        if ($image === null)
+            throw new \Exception("failed to read image placeholder");
     }
-
-    if ($image === null)
-        throw new \Exception("failed to read image placeholder");
 
     return $image;
 }

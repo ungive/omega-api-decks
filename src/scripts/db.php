@@ -106,6 +106,7 @@ function update_database(string $source_url): bool
 
         SELECT
             id,
+            alias,
             name,
             CASE
                 WHEN type & 0x40 THEN 'EXTRA' -- Fusion
@@ -140,6 +141,7 @@ function update_database(string $source_url): bool
 
         CREATE TABLE card (
             id INTEGER PRIMARY KEY,
+            alias INTEGER NOT NULL,
             cluster CHAR(2),
             sanitized_name VARCHAR(128),
             name VARCHAR(128),
@@ -171,6 +173,7 @@ function update_database(string $source_url): bool
 
         $cards[] = [
             intval($row['id']),
+            intval($row['alias']),
             $name_cluster,
             $sanitized_name,
             $name,
@@ -180,7 +183,7 @@ function update_database(string $source_url): bool
     }
 
     $dest_db->beginTransaction();
-    $columns = [ 'id', 'cluster', 'sanitized_name', 'name', 'type', 'match_name' ];
+    $columns = [ 'id', 'alias', 'cluster', 'sanitized_name', 'name', 'type', 'match_name' ];
     $retval = insert_chunked($dest_db, 'card', $columns, $cards, 256);
 
     if (!$retval) {
@@ -226,11 +229,22 @@ function update_image_urls(): bool
         $extension = ltrim($url_postfix, ".");
 
         $db = Config\create_repository_pdo();
-        $cards = $db->query(" SELECT id FROM card ORDER BY CAST(id AS TEXT) ");
+        $cards = $db->query(" SELECT id, alias FROM card ORDER BY CAST(id AS TEXT) ");
 
         foreach ($cards as $row) {
             $code = $row['id'];
-            $lookup_table["$code"] = "$url/$code.$extension";
+            $alias = $row['alias'];
+            $possible_urls = [];
+            $possible_urls[] = "$url/$code.$extension";
+
+            // TODO: go through each alias recursively, until there is none
+            // and add urls to the list that contain the alias.
+            // for now we only add the direct alias.
+            if (!empty($alias) && intval($alias) !== 0) {
+                $possible_urls[] = "$url/$alias.$extension";
+            }
+
+            $lookup_table["$code"] = $possible_urls;
         }
     }
 
@@ -245,8 +259,9 @@ function update_image_urls(): bool
         $lookup_table_merge = json_decode($contents, true);
         foreach ($lookup_table_merge as $key => $value) {
             if (!array_key_exists($key, $lookup_table)) {
-                $lookup_table["$key"] = $value;
+                $lookup_table["$key"] = [];
             }
+            $lookup_table["$key"][] = $value;
         }
 
         unlink($write_path);
