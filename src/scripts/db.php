@@ -220,33 +220,7 @@ function update_image_urls(): bool
 
     $has_image_source = false;
 
-    $lookup_table = [];
-
-    if ($url_prefix !== false && $url_postfix !== false) {
-        $has_image_source = true;
-
-        $url = rtrim($url_prefix, "/");
-        $extension = ltrim($url_postfix, ".");
-
-        $db = Config\create_repository_pdo();
-        $cards = $db->query(" SELECT id, alias FROM card ORDER BY CAST(id AS TEXT) ");
-
-        foreach ($cards as $row) {
-            $code = $row['id'];
-            $alias = $row['alias'];
-            $possible_urls = [];
-            $possible_urls[] = "$url/$code.$extension";
-
-            // TODO: go through each alias recursively, until there is none
-            // and add urls to the list that contain the alias.
-            // for now we only add the direct alias.
-            if (!empty($alias) && intval($alias) !== 0) {
-                $possible_urls[] = "$url/$alias.$extension";
-            }
-
-            $lookup_table["$code"] = $possible_urls;
-        }
-    }
+    $json_urls = null;
 
     if ($lookup_json_url !== false) {
         $has_image_source = true;
@@ -256,16 +230,67 @@ function update_image_urls(): bool
             return false;
         }
         $contents = file_get_contents($write_path);
-        $lookup_table_merge = json_decode($contents, true);
-        foreach ($lookup_table_merge as $key => $value) {
+        $json_urls = json_decode($contents, true);
+        unlink($write_path);
+    }
+
+    $lookup_table = [];
+
+    if ($url_prefix !== false && $url_postfix !== false) {
+        $has_image_source = true;
+
+        $url = rtrim($url_prefix, "/");
+        $extension = ltrim($url_postfix, ".");
+
+        $db = Config\create_repository_pdo();
+        $cards = $db->query(<<<SQL
+
+            SELECT c1.id, c1.alias, GROUP_CONCAT(c2.id, ',') AS same_name_ids FROM card AS c1
+            LEFT JOIN card AS c2 ON c1.name = c2.name AND c1.id <> c2.id
+            GROUP BY c1.id
+            ORDER BY CAST(c1.id AS TEXT)
+
+        SQL);
+
+        foreach ($cards as $row) {
+            $code = $row['id'];
+            $alias = $row['alias'];
+            $same_name_ids = $row['same_name_ids'];
+
+            $result = ["$url/$code.$extension"];
+            $ids = [intval($code)];
+
+            if (!empty($alias) && intval($alias) !== 0) {
+                $result[] = "$url/$alias.$extension";
+                $ids[] = intval($alias);
+            }
+            if ($same_name_ids !== null) {
+                foreach (explode(',', $same_name_ids) as $id) {
+                    $result[] = "$url/$id.$extension";
+                    $ids[] = intval($id);
+                }
+            }
+            if ($json_urls != null) {
+                foreach ($ids as $id) {
+                    if (array_key_exists($id, $json_urls)) {
+                        $result[] = $json_urls[$id];
+                    }
+                }
+            }
+
+            $lookup_table["$code"] = array_unique($result);
+        }
+    }
+    else if ($json_urls !== null) {
+        foreach ($json_urls as $key => $value) {
             if (!array_key_exists($key, $lookup_table)) {
                 $lookup_table["$key"] = [];
             }
             $lookup_table["$key"][] = $value;
         }
-
-        unlink($write_path);
     }
+
+
 
     if (!$has_image_source) {
         $log->error('missing card image source in config');
