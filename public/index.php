@@ -117,6 +117,11 @@
         </a>
       </span>
     </footer>
+    <div id="data-request-token" style="display:none;" data-request-token="<?php
+        if (!in_array(strtolower(getenv('REQUEST_TOKEN_IN_UI')), ['0', 'false', 'no'])) {
+            echo getenv('REQUEST_TOKEN');
+        }
+    ?>"></div>
     <script
       type="text/javascript"
       src="./vendor/cookie.js/cookie.umd.min.js"

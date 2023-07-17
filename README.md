@@ -26,6 +26,7 @@ CARD_IMAGE_LOOKUP_JSON_URL=https://example.com/image_urls.json
 CARD_IMAGE_URL=https://example.com/images
 CARD_IMAGE_URL_EXT=jpg
 REQUEST_TOKEN=somerandomstring
+REQUEST_TOKEN_IN_UI=true
 WEBHOOK_UPDATE_TOKEN=somerandomstring
 PORT=8080
 ```
@@ -34,7 +35,7 @@ An example can be found in the file `.env.example`.
 
 URLs for images are built like this: `{CARD_IMAGE_URL}/{passcode}.{CARD_IMAGE_URL_EXT}`. There is also a `CARD_IMAGE_LOOKUP_JSON_URL` which should give a JSON file that maps card IDs (`passcode`) to a valid image URL. At least one of these options must be given. If both are given, the results of `CARD_IMAGE_URL` are preferred.
 
-The `REQUEST_TOKEN` is optional and if present, requires a token in the URL path for authorized access to every API endpoint. Pass it as `?token=somerandomstring` with the value that is set in your env-file.
+The `REQUEST_TOKEN` is optional and if present, requires a token in the URL path for authorized access to every API endpoint. Pass it as `?token=somerandomstring` with the value that is set in your env-file. Set `REQUEST_TOKEN_IN_UI` to `false`, `no` or `0` if you wish to hide the token in the web interface, which might be desirable if the token is used to make sure only authorized parties can use the API. By default, the token is visible through the UI, so users can convert deck codes with the web interface. At this time, the UI simply doesn't work if `REQUEST_TOKEN_IN_UI` is set to a falsey value (this might be updated in the future by implementing an option to disable the UI).
 
 The `WEBHOOK_UPDATE_TOKEN` exists to prevent unauthorized requests to the [`webhook/update`](public/webhook/update.php) endpoint. It must be set and is separate from the `REQUEST_TOKEN`. Pass it as `?token=somerandomstring` with the value that is set in your env-file.
 

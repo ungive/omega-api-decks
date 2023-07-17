@@ -48,9 +48,14 @@ function onClientResize (element, callback) {
   throw 'Not implemented';
 }
 
+function getRequestToken() {
+  return document.getElementById('data-request-token').getAttribute('data-request-token');
+}
+
 function Endpoint (name, query) {
   this.name = fixedEncodeURIComponent(name);
   this.query = query;
+  query['token'] = getRequestToken();
 }
 
 Endpoint.prototype.url = function () {
